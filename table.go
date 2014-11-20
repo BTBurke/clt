@@ -54,3 +54,25 @@ func getTerminalSize() (width, height int, err error) {
 	}
 	return int(dimensions[1]), int(dimensions[0]), nil
 }
+
+func (r *row) addCell(c cell) {
+	r.cells = append(r.cells, c)
+}
+
+// AddRow adds a new row to the table given an array of strings for each column's
+// content.  You can set styles on this particular row by a subsequent call to
+// AddRowStyle.
+func (t *table) AddRow(rowStrings []string) error {
+	if len(rowStrings) > t.columns {
+		return fmt.Errorf("Received %v columns but table only has %v columns.", len(rowStrings), t.columns)
+	}
+	row := &row{}
+	for _, rValue := range rowStrings {
+		row.addCell(cell{rValue, len(rValue)})
+	}
+	for len(row) < t.columns {
+		row.addCell(cell{})
+	}
+	t.rows = append(t.rows, row)
+	return nil
+}
