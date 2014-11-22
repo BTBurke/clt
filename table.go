@@ -39,6 +39,7 @@ type table struct {
 	MaxHeight    int
 	justify      []string
 	SkipTermSize bool
+	tableStyle   []chalk.Style
 }
 
 // Magic from the go source for ssh/terminal to find terminal size.  Because it is
@@ -75,6 +76,15 @@ func (t *table) AddRow(rowStrings []string) error {
 	}
 	t.rows = append(t.rows, newRow)
 	return nil
+}
+
+// SetTableStyle sets the default styles for each column in the row except
+// the column headers.
+func (t *table) SetTableStyle(styles ...chalk.Style) error {
+	if len(styles) > t.columns {
+		return fmt.Errorf("Received %v column styles but table only has %v columns.", len(styles), t.columns)
+	}
+
 }
 
 // SetTitle sets the title for the table.  The default style is bold, but can
