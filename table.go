@@ -84,7 +84,7 @@ func (t *table) SetTableStyle(styles ...chalk.Style) error {
 	if len(styles) > t.columns {
 		return fmt.Errorf("Received %v column styles but table only has %v columns.", len(styles), t.columns)
 	}
-
+	return nil
 }
 
 // SetTitle sets the title for the table.  The default style is bold, but can
