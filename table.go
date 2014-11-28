@@ -1,4 +1,4 @@
-package mcclintock
+package clt
 
 import (
 	//"bytes"

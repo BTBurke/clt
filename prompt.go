@@ -1,4 +1,4 @@
-package mcclintock
+package clt
 
 func Say(format string, args ...interface{}) {
 	s := buildSay(format, args...)

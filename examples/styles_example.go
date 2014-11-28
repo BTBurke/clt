@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/BTBurke/mcclintock"
+	"github.com/BTBurke/clt"
 )
 
 func main() {
-	r := mcclintock.Text().Red("RED")
-	fmt.Println(r)
-	fmt.Printf("\x1b[31mThis sentence is red\x1b[39m")
-	
+	fmt.Printf("This is %s text\n", clt.Style(clt.Red).ApplyTo("red"))
+	fmt.Printf("This is %s text\n", clt.Style(clt.Blue, clt.Underline).ApplyTo("blue and underlined"))
+	fmt.Printf("This is %s text\n", clt.Style(clt.Blue, clt.Background(clt.White)).ApplyTo("blue on a white background"))
+	fmt.Printf("This is %s text\n", clt.Style(clt.Italic).ApplyTo("italic"))
+	fmt.Printf("This is %s text\n", clt.Style(clt.Bold).ApplyTo("bold"))
+
 }

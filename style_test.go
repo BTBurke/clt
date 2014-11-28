@@ -1,4 +1,4 @@
-package mcclintock
+package clt
 
 import "testing"
 
@@ -13,8 +13,8 @@ func TestStyle1(t *testing.T) {
 
 func TestStyle2(t *testing.T) {
 	s2 := Style(Red, Underline)
-	expectBefore2 := "\x1b[31; 4m"
-	expectAfter2 := "\x1b[39; 24m"
+	expectBefore2 := "\x1b[31;4m"
+	expectAfter2 := "\x1b[39;24m"
 	if s2.before != expectBefore2 || s2.after != expectAfter2 {
 		t.Errorf("Expected:\nBefore: %s After: %s\nGot:\nBefore: %s After: %s\n", expectBefore2, expectAfter2, s2.before, s2.after)
 	}
@@ -33,7 +33,7 @@ func TestApplyTo(t *testing.T) {
 func TestApplyTo2(t *testing.T) {
 	s := Style(Red, Underline)
 	testString := "This is a test"
-	expect := "\x1b[31; 4mThis is a test\x1b[39; 24m"
+	expect := "\x1b[31;4mThis is a test\x1b[39;24m"
 	applyResult := s.ApplyTo(testString)
 	if applyResult != expect {
 		t.Errorf("Expected: %v\nGot: %v\n", expect, applyResult)

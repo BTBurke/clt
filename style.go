@@ -1,4 +1,4 @@
-package mcclintock
+package clt
 
 import (
 	"bytes"
@@ -70,7 +70,7 @@ var (
 )
 
 // Background returns a style that sets the background to the appropriate color
-func Background(c *color) *color {
+func Background(c color) color {
 	c.before += 10
 	c.after += 10
 	return c
@@ -95,8 +95,8 @@ func Style(s ...styleInterface) *style {
 		for idx, sty := range s {
 			bef, aft = sty.codes()
 			if idx < len(s)-1 {
-				beforeConcat.WriteString(fmt.Sprintf("%v; ", bef))
-				afterConcat.WriteString(fmt.Sprintf("%v; ", aft))
+				beforeConcat.WriteString(fmt.Sprintf("%v;", bef))
+				afterConcat.WriteString(fmt.Sprintf("%v;", aft))
 			} else {
 				beforeConcat.WriteString(fmt.Sprintf("%vm", bef))
 				afterConcat.WriteString(fmt.Sprintf("%vm", aft))
