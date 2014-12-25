@@ -18,11 +18,16 @@ const (
 )
 
 type Progress struct {
-	Prompt        string
+	// Prompt to display before spinner or bar
+	Prompt string
+	// Approximate length of the total progress display, including
+	// the prompt and the ..., does not include status indicator
+	// at the end (e.g, the spinner, FAIL, OK, or XX%)
 	DisplayLength int
-	style         int
-	cf            chan float64
-	c             chan int
+	// Other non-exporting fields
+	style int
+	cf    chan float64
+	c     chan int
 }
 
 // NewProgressSpinner returns a new spinner with prompt <message>
