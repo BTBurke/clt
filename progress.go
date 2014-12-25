@@ -24,7 +24,7 @@ type Progress struct {
 	// the prompt and the ..., does not include status indicator
 	// at the end (e.g, the spinner, FAIL, OK, or XX%)
 	DisplayLength int
-	// Other non-exporting fields
+	// Other non-exported fields
 	style int
 	cf    chan float64
 	c     chan int
