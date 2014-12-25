@@ -36,11 +36,11 @@ import "github.com/BTBurke/clt"
 
 CLT provides two kinds of progress bars:
 
-* Spinner - Useful for when you want to show progress but don't know exactly when an action will complete
+* *Spinner* - Useful for when you want to show progress but don't know exactly when an action will complete
 
-* Bar - Useful when you have a defined number of iterations to completion and you can update progress during processing
+* *Bar* - Useful when you have a defined number of iterations to completion and you can update progress during processing
 
-### Example:  
+#### Example:  
 
 See [examples/progress_example.go](https://github.com/BTBurke/clt/blob/master/examples/progress_example.go) for the example in the screencast below.
 
