@@ -31,3 +31,21 @@ package main
 
 import "github.com/BTBurke/clt"
 ```
+
+## Progress Bars
+
+CLT provides two kinds of progress bars:
+
+* Spinner - Useful for when you want to show progress but don't know exactly when an action will complete
+
+* Bar - Useful when you have a defined number of iterations to completion and you can update progress during processing
+
+Example:  See examples/progress_example.go for the example in the screencast below.
+
+![console output](https://s3.amazonaws.com/btburke-github/progress-ex.gif)
+
+Progress bars use go routines to update the progress status while your app does other processing.  Remember to close out the progress element with either a call to Success() or Fail() to terminate this routine.
+
+
+
+
