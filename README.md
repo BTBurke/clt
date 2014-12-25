@@ -40,7 +40,9 @@ CLT provides two kinds of progress bars:
 
 * Bar - Useful when you have a defined number of iterations to completion and you can update progress during processing
 
-Example:  See [examples/progress_example.go](https://github.com/BTBurke/clt/blob/master/examples/progress_example.go) for the example in the screencast below.
+### Example:  
+
+See [examples/progress_example.go](https://github.com/BTBurke/clt/blob/master/examples/progress_example.go) for the example in the screencast below.
 
 ![console output](https://s3.amazonaws.com/btburke-github/progress-ex.gif)
 
