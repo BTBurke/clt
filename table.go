@@ -1,45 +1,69 @@
 package clt
 
 import (
-	//"bytes"
+	"bytes"
 	"fmt"
-	"github.com/ttacon/chalk"
+	"io"
+	"log"
 	"os"
-	//"os/exec"
-	//"strconv"
-	//"strings"
+	"strings"
 	"syscall"
 	"unsafe"
+)
+
+// Rendering strategies when table natural width exceeds
+// width of terminal.
+const (
+	// WrapWidest will cause the widest column to be wrapped
+	// into multiple lines.
+	WrapWidest int = iota
+	// WrapUserChoice will cause a user-defined column to
+	// be wrapped. Call table.WrapColumns(<col number>...).
+	WrapUserChoice
+)
+
+// Column justification flags
+const (
+	jLeft int = iota
+	jCenter
+	jRight
 )
 
 type cell struct {
 	value string
 	width int
-	style chalk.Style
+	style *style
 }
 
 type title struct {
 	value string
 	width int
-	style chalk.TextStyle
+	style *style
 }
 
 type row struct {
 	cells []cell
 }
 
+type col struct {
+	index         int
+	naturalWidth  int
+	computedWidth int
+	wrap          bool
+	style         *style
+	justify       int
+}
+
 type table struct {
 	title        title
-	columns      int
+	columns      []col
 	headers      []cell
 	rows         []row
-	ShowLines    bool
-	Indent       int
+	pad          int
 	MaxWidth     int
 	MaxHeight    int
-	justify      []string
 	SkipTermSize bool
-	tableStyle   []chalk.Style
+	renderStrat  int
 }
 
 // Magic from the go source for ssh/terminal to find terminal size.  Because it is
@@ -63,26 +87,26 @@ func (r *row) addCell(c cell) {
 // AddRow adds a new row to the table given an array of strings for each column's
 // content.  You can set styles on this particular row by a subsequent call to
 // AddRowStyle.
-func (t *table) AddRow(rowStrings []string) error {
-	if len(rowStrings) > t.columns {
-		return fmt.Errorf("Received %v columns but table only has %v columns.", len(rowStrings), t.columns)
+func (t *table) AddRow(rowStrings ...string) error {
+	if len(rowStrings) > len(t.columns) {
+		return fmt.Errorf("Received %v columns but table only has %v columns.", len(rowStrings), len(t.columns))
 	}
 	newRow := row{}
-	for _, rValue := range rowStrings {
-		newRow.addCell(cell{value: rValue, width: len(rValue)})
+	for i, rValue := range rowStrings {
+		newRow.addCell(cell{value: rValue, width: len(rValue), style: t.columns[i].style})
 	}
-	for len(newRow.cells) < t.columns {
-		newRow.addCell(cell{})
+	for len(newRow.cells) < len(t.columns) {
+		newRow.addCell(cell{value: "", width: 0, style: Style(Default)})
 	}
 	t.rows = append(t.rows, newRow)
 	return nil
 }
 
-// SetTableStyle sets the default styles for each column in the row except
+// SetColumnStyles sets the default styles for each column in the row except
 // the column headers.
-func (t *table) SetTableStyle(styles ...chalk.Style) error {
-	if len(styles) > t.columns {
-		return fmt.Errorf("Received %v column styles but table only has %v columns.", len(styles), t.columns)
+func (t *table) SetColumnStyles(styles ...*style) error {
+	if len(styles) > len(t.columns) {
+		return fmt.Errorf("Received %v column styles but table only has %v columns.", len(styles), len(t.columns))
 	}
 	return nil
 }
@@ -90,16 +114,41 @@ func (t *table) SetTableStyle(styles ...chalk.Style) error {
 // SetTitle sets the title for the table.  The default style is bold, but can
 // be changed using SetTitleStyle.
 func (t *table) SetTitle(s string) {
-	t.title = title{value: s, width: len(s), style: chalk.Bold}
+	t.title = title{value: s, width: len(s), style: Style(Bold)}
 }
 
 // SetTitleStyle sets the font style for the title.  The default is chalk.Bold
 // but can be set to any valid value of chalk.TextStyle
-func (t *table) SetTitleStyle(sty chalk.TextStyle) {
+func (t *table) SetTitleStyle(sty *style) {
 	t.title.style = sty
 }
 
-// SetColumnHeaders sets the column headers
+// SetColumnHeaders sets the column headers with an array of strings
+// The default style is Underline and Bold.  This can be changed through
+// a call to SetColumnHeaderStyles.
+func (t *table) SetColumnHeaders(headers ...string) error {
+	if len(headers) > len(t.columns) {
+		return fmt.Errorf("More column headers than columns.")
+	}
+	for i, header := range headers {
+		t.headers[i].value = header
+		t.headers[i].style = Style(Bold, Underline)
+		t.headers[i].width = len(header)
+	}
+	return nil
+}
+
+// SetColumnHeaderStyles sets the column header styles. Returns an error
+// if there are more styles than the number of columns.
+func (t *table) SetColumnHeaderStyles(styles ...*style) error {
+	if len(styles) > len(t.columns) {
+		return fmt.Errorf("Got more styles than number of columns")
+	}
+	for i, style := range styles {
+		t.headers[i].style = style
+	}
+	return nil
+}
 
 // NewTable creates a new table with a given number of columns, setting the default
 // justfication to left, and attempting to detect the existing terminal size to
@@ -107,13 +156,287 @@ func (t *table) SetTitleStyle(sty chalk.TextStyle) {
 // MaxWidth and MaxHeight properties.
 func NewTable(numColumns int) *table {
 	w, h, err := getTerminalSize()
-	if err != nil {
+	if err != nil || w == 0 || h == 0 {
 		w = 80
 		h = 25
 	}
-	just := make([]string, numColumns)
+
+	// Fill with defaults to skip complicated bounds checking on
+	// changing justify or row styles
+	defaultColumns := make([]col, numColumns)
+	emptyHeaders := make([]cell, numColumns)
 	for i := 0; i < numColumns; i++ {
-		just[i] = "l"
+		defaultColumns[i].index = i
+		defaultColumns[i].style = Style(Default)
+		defaultColumns[i].justify = jLeft
+		defaultColumns[i].wrap = false
 	}
-	return &table{columns: numColumns, justify: just, MaxWidth: w, MaxHeight: h}
+
+	return &table{
+		columns:     defaultColumns,
+		MaxWidth:    w,
+		MaxHeight:   h,
+		headers:     emptyHeaders,
+		renderStrat: WrapWidest,
+	}
+
+}
+
+// Show will render the table using the headers, title, and styles previously
+// set.
+func (t *table) Show() {
+	t.render(os.Stdout)
+
+}
+
+func (t *table) render(w io.Writer) {
+	err := t.computeColWidths()
+	if err != nil {
+		// this error should never happen with fallback overflow strategy
+		log.Fatal(err)
+	}
+	var renderedT bytes.Buffer
+	renderedT.WriteString(renderTitle(t))
+
+}
+
+func renderTitle(t *table) string {
+	return justCenter(t.title.value, t.width(), 0, t.title.style)
+}
+
+func justCenter(s string, width int, pad int, sty *style) string {
+	contentLen := len(s)
+	onLeft := (width - contentLen) / 2
+	if onLeft < 0 {
+		onLeft = 0
+	}
+	onRight := width - contentLen - onLeft
+	if onRight < 0 {
+		onRight = 0
+	}
+	return fmt.Sprintf("%s%s%s", spaces(onLeft+pad), sty.ApplyTo(s), spaces(onRight+pad))
+}
+
+func justLeft(s string, width int, pad int, sty *style) string {
+	contentLen := len(s)
+	onRight := width - contentLen
+	if onRight < 0 {
+		onRight = 0
+	}
+	return fmt.Sprintf("%s%s%s", spaces(pad), sty.ApplyTo(s), spaces(onRight+pad))
+}
+
+// justRight is right-justified text with padding and style
+func justRight(s string, width int, pad int, sty *style) string {
+	contentLen := len(s)
+	onLeft := width - contentLen
+	if onLeft < 0 {
+		onLeft = 0
+	}
+	return fmt.Sprintf("%s%s%s", spaces(onLeft+pad), sty.ApplyTo(s), spaces(pad))
+}
+
+// wrap will break long lines on breakpoints space, :, ., /, \, -.  If
+// line is too long without breakpoints, will do dumb wrap at width w.
+func wrap(s string, w int) []string {
+	var out []string
+	var wrapped string
+	rem := s
+	for len(rem) > 0 {
+		wrapped, rem = wrapSubString(rem, w, " :.-/\\")
+		out = append(out, wrapped)
+	}
+	return out
+}
+
+// wrapSubString - don't call directly. Works with wrap to recursively
+// split a string at the specified breakpoints.
+func wrapSubString(s string, w int, breakpts string) (wrapped string, remainder string) {
+
+	if len(s) <= w {
+		return strings.TrimSpace(s), ""
+	}
+
+	ind := strings.LastIndexAny(s[0:w], breakpts)
+	switch {
+	case ind > 0:
+		return strings.TrimSpace(s[0 : ind+1]), strings.TrimSpace(s[ind+1 : len(s)])
+	case ind == -1:
+		return strings.TrimSpace(s[0 : w+1]), strings.TrimSpace(s[w+1 : len(s)])
+	}
+	return "", ""
+}
+
+// spaces is a convenience function to get n spaces repeated
+func spaces(n int) string {
+	return strings.Repeat(" ", n)
+}
+
+func (t *table) width() int {
+	return sum(extractComputedWidth(t)) + len(t.columns)*2*t.pad
+}
+
+// automagically determine column widths.  See if it can fit inside
+// max width. If not, make intelligent guess about which should be
+// made multi-line
+func (t *table) computeColWidths() error {
+	computeNaturalWidths(t)
+	switch {
+	case simpleStrategy(t):
+		return nil
+	case wrapWidestStrategy(t):
+		return nil
+	case overflowStrategy(t):
+		return nil
+	}
+	return fmt.Errorf("No table rendering strategy suitable.")
+}
+
+// simpleStrategy sets all column widths to their natural width.
+// Successful if the whole table fits inside MaxWidth (including pad)
+func simpleStrategy(t *table) bool {
+	natWidths := extractNatWidth(t)
+	colWPadded := mapAdd(natWidths, 2*t.pad)
+	totalWidth := sum(colWPadded)
+
+	if totalWidth <= t.MaxWidth {
+		for i, _ := range t.columns {
+			t.columns[i].computedWidth = natWidths[i]
+		}
+		return true
+	}
+	return false
+}
+
+// wrapWidestStrategy wraps the column with the largest natural width.
+// Successful if the wrapped width >50% of natural width
+func wrapWidestStrategy(t *table) bool {
+	naturalWidths := extractNatWidth(t)
+	maxI, maxW := max(naturalWidths)
+	tableMaxW := t.MaxWidth - 2*len(t.columns)*t.pad
+	wrapW := tableMaxW - sumWithoutIndex(naturalWidths, maxI)
+	if wrappedWidthOk(wrapW, maxW) {
+		for i, _ := range t.columns {
+			switch i {
+			case maxI:
+				t.columns[i].computedWidth = wrapW
+				t.columns[i].wrap = true
+			default:
+				t.columns[i].computedWidth = t.columns[i].naturalWidth
+			}
+		}
+		return true
+	}
+	return false
+}
+
+// overflowStrategy is the fallback if no other strategy makes the
+// table fit within the natural width. Sets all columns to their
+// natural width and lets the terminal wrap the lines.
+func overflowStrategy(t *table) bool {
+	for i, col := range t.columns {
+		t.columns[i].computedWidth = col.naturalWidth
+	}
+	return true
+}
+
+// convenience function for extracting natural width as []int
+// from []col
+func extractNatWidth(t *table) []int {
+	out := make([]int, len(t.columns))
+	for i, col := range t.columns {
+		out[i] = col.naturalWidth
+	}
+	return out
+}
+
+// convenience function for extracting computed width as []int
+// from []col
+func extractComputedWidth(t *table) []int {
+	out := make([]int, len(t.columns))
+	for i, col := range t.columns {
+		out[i] = col.computedWidth
+	}
+	return out
+}
+
+// computes natural column widths and stores in table.columns.naturalWidth
+func computeNaturalWidths(t *table) {
+	maxColW := make([]int, len(t.columns))
+
+	for _, row := range t.rows {
+		for col, cell := range row.cells {
+			if cell.width > maxColW[col] {
+				maxColW[col] = cell.width
+			}
+		}
+	}
+
+	for col, header := range t.headers {
+		if header.width > maxColW[col] {
+			maxColW[col] = header.width
+		}
+	}
+
+	for i, natWidth := range maxColW {
+		t.columns[i].naturalWidth = natWidth
+	}
+}
+
+func sum(n []int) int {
+	total := 0
+	for _, num := range n {
+		total += num
+	}
+	return total
+}
+
+// sum of all values except value at index
+func sumWithoutIndex(n []int, index int) int {
+	total := 0
+	for idx, num := range n {
+		switch idx {
+		case index:
+			continue
+		default:
+			total += num
+		}
+	}
+	return total
+}
+
+// wrappedWidthOk true if wrapped width >50% natural width
+func wrappedWidthOk(wrapW int, naturalW int) bool {
+	if float64(wrapW)/float64(naturalW) >= 0.5 {
+		return true
+	}
+	return false
+}
+
+// positive numbers only, returns index of first logical max
+func max(n []int) (index int, biggest int) {
+	for i, num := range n {
+		if num > biggest {
+			biggest = num
+			index = i
+		}
+	}
+	return
+}
+
+// add inc to every number in n, return new array
+func mapAdd(n []int, inc int) []int {
+	ret := make([]int, len(n))
+	for i, num := range n {
+		ret[i] = num + inc
+	}
+	return ret
+}
+
+// oversize cell detector
+func osCell(c cell, w int, pad int) bool {
+	if c.width >= (w - 2*pad) {
+		return true
+	}
+	return false
 }
