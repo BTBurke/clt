@@ -117,6 +117,7 @@ func TestRenderHelpers(t *testing.T) {
 			computedWidth: 14,
 		},
 	}
+	table.pad = 2
 
 	c.Convey("TestRenderHelpers", t, func() {
 		c.So(mapAdd(n, 1), c.ShouldResemble, []int{2, 4, 3})
@@ -129,6 +130,7 @@ func TestRenderHelpers(t *testing.T) {
 		c.So(wrappedWidthOk(49, 100), c.ShouldBeFalse)
 		c.So(extractComputedWidth(table), c.ShouldResemble, []int{12, 14})
 		c.So(extractNatWidth(table), c.ShouldResemble, []int{10, 12})
+		c.So(table.width(), c.ShouldEqual, 12+14+8)
 	})
 
 }
@@ -231,10 +233,78 @@ func TestJustifcation(t *testing.T) {
 
 func TestRenderTitle(t *testing.T) {
 	table := NewTable(2)
-	table.MaxWidth = 20
+	table.AddRow(s(10), s(10))
+	table.pad = 0
+	table.MaxWidth = 30
 	table.SetTitle("Test Title")
+	table.computeColWidths()
 	want := fmt.Sprintf("     %s     ", Style(Bold).ApplyTo("Test Title"))
 	c.Convey("Title should be bold and centered", t, func() {
 		c.So(renderTitle(table), c.ShouldEqual, want)
+	})
+}
+
+func TestRenderCell(t *testing.T) {
+	table := NewTable(1)
+	table.AddRow(s(10))
+	table.AddRow(s(14))
+	table.MaxWidth = 30
+	table.pad = 2
+	table.computeColWidths()
+	c.Convey("Cell should be rendered with correct justification", t, func() {
+		want := fmt.Sprintf("  %s      ", Style(Default).ApplyTo(s(10)))
+		st := renderCell(table.rows[0].cells[0].value, table.columns[0], table.pad)
+		c.So(st, c.ShouldResemble, want)
+		table.columns[0].justify = jCenter
+		want = fmt.Sprintf("    %s    ", Style(Default).ApplyTo(s(10)))
+		st = renderCell(table.rows[0].cells[0].value, table.columns[0], table.pad)
+		c.So(st, c.ShouldResemble, want)
+		table.columns[0].justify = jRight
+		want = fmt.Sprintf("      %s  ", Style(Default).ApplyTo(s(10)))
+		st = renderCell(table.rows[0].cells[0].value, table.columns[0], table.pad)
+		c.So(st, c.ShouldResemble, want)
+	})
+}
+
+func TestRenderRow(t *testing.T) {
+	table := NewTable(2)
+	table.AddRow(s(10), s(10))
+	table.AddRow(s(10), s(20))
+	table.pad = 2
+	table.MaxWidth = 28
+	table.computeColWidths()
+	c10 := Style(Default).ApplyTo(s(10))
+	cEmpty := Style(Default).ApplyTo("")
+	c.Convey("Non-wrapped row rendered normally", t, func() {
+
+		want := fmt.Sprintf("  %s    %s  \n", c10, c10)
+		renderedRow := renderRow(table.rows[0].cells, table.columns, table.pad)
+		c.So(renderedRow, c.ShouldResemble, want)
+	})
+	c.Convey("Wrapped row rendered as multiple lines", t, func() {
+
+		want := fmt.Sprintf("  %s    %s  \n  %s              %s  \n", c10, c10, cEmpty, c10)
+		renderedRow := renderRow(table.rows[1].cells, table.columns, table.pad)
+		c.So(renderedRow, c.ShouldResemble, want)
+	})
+}
+
+func TestRenderTable(t *testing.T) {
+	table := NewTable(2)
+	table.AddRow(s(10), s(10))
+	table.AddRow(s(10), s(20))
+	table.pad = 2
+	table.MaxWidth = 28
+	table.SetTitle("Test Table")
+	c10 := Style(Default).ApplyTo(s(10))
+	cEmpty := Style(Default).ApplyTo("")
+	cTitle := Style(Bold).ApplyTo("Test Table")
+	c.Convey("Table with wrapped + non-wrapped rows rendered appropriately", t, func() {
+		want0 := fmt.Sprintf("         %s         \n\n", cTitle)
+		want1 := fmt.Sprintf("  %s    %s  \n", c10, c10)
+		want2 := fmt.Sprintf("  %s    %s  \n  %s              %s  \n", c10, c10, cEmpty, c10)
+		want := want0 + want1 + want2
+		renderedTable := table.renderTableAsString()
+		c.So(renderedTable, c.ShouldResemble, want)
 	})
 }

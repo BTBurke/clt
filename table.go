@@ -3,23 +3,11 @@ package clt
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"strings"
 	"syscall"
 	"unsafe"
-)
-
-// Rendering strategies when table natural width exceeds
-// width of terminal.
-const (
-	// WrapWidest will cause the widest column to be wrapped
-	// into multiple lines.
-	WrapWidest int = iota
-	// WrapUserChoice will cause a user-defined column to
-	// be wrapped. Call table.WrapColumns(<col number>...).
-	WrapUserChoice
 )
 
 // Column justification flags
@@ -63,7 +51,6 @@ type table struct {
 	MaxWidth     int
 	MaxHeight    int
 	SkipTermSize bool
-	renderStrat  int
 }
 
 // Magic from the go source for ssh/terminal to find terminal size.  Because it is
@@ -102,11 +89,35 @@ func (t *table) AddRow(rowStrings ...string) error {
 	return nil
 }
 
+// AddStyledRow adds a new row to the table with custom styles for each cell.
+func (t *table) AddStyledRow(cells ...cell) error {
+	if len(cells) > len(t.columns) {
+		return fmt.Errorf("Received %v columns but table only has %v columns.", len(cells), len(t.columns))
+	}
+	newRow := row{}
+	for _, cell1 := range cells {
+		newRow.addCell(cell1)
+	}
+	for len(newRow.cells) < len(t.columns) {
+		newRow.addCell(cell{value: "", width: 0, style: Style(Default)})
+	}
+	t.rows = append(t.rows, newRow)
+	return nil
+}
+
+// Cell returns a new cell with a custom style for use with AddStyledRow
+func Cell(v string, sty *style) cell {
+	return cell{value: v, width: len(v), style: sty}
+}
+
 // SetColumnStyles sets the default styles for each column in the row except
 // the column headers.
 func (t *table) SetColumnStyles(styles ...*style) error {
 	if len(styles) > len(t.columns) {
 		return fmt.Errorf("Received %v column styles but table only has %v columns.", len(styles), len(t.columns))
+	}
+	for i, sty := range styles {
+		t.columns[i].style = sty
 	}
 	return nil
 }
@@ -173,11 +184,11 @@ func NewTable(numColumns int) *table {
 	}
 
 	return &table{
-		columns:     defaultColumns,
-		MaxWidth:    w,
-		MaxHeight:   h,
-		headers:     emptyHeaders,
-		renderStrat: WrapWidest,
+		columns:   defaultColumns,
+		MaxWidth:  w,
+		MaxHeight: h,
+		headers:   emptyHeaders,
+		pad:       2,
 	}
 
 }
@@ -185,23 +196,108 @@ func NewTable(numColumns int) *table {
 // Show will render the table using the headers, title, and styles previously
 // set.
 func (t *table) Show() {
-	t.render(os.Stdout)
+	tableAsString := t.renderTableAsString()
+	fmt.Printf(tableAsString)
 
 }
 
-func (t *table) render(w io.Writer) {
+func (t *table) renderTableAsString() string {
 	err := t.computeColWidths()
 	if err != nil {
 		// this error should never happen with fallback overflow strategy
 		log.Fatal(err)
 	}
 	var renderedT bytes.Buffer
-	renderedT.WriteString(renderTitle(t))
-
+	renderedT.WriteString(renderTitle(t) + "\n\n")
+	renderedT.WriteString(renderHeaders(t.headers, t.columns, t.pad))
+	for _, row := range t.rows {
+		renderedT.WriteString(renderRow(row.cells, t.columns, t.pad))
+	}
+	return renderedT.String()
 }
 
+// renderTitle returns the title as a formatted string
 func renderTitle(t *table) string {
 	return justCenter(t.title.value, t.width(), 0, t.title.style)
+}
+
+func renderHeaders(cells []cell, cols []col, pad int) string {
+	wrappedLinesCount := make([]int, len(cells))
+
+	for i, cell1 := range cells {
+		wrappedL := wrap(cell1.value, cols[i].computedWidth)
+		wrappedLinesCount[i] = len(wrappedL)
+	}
+	_, totalLines := max(wrappedLinesCount)
+	lines := make([]bytes.Buffer, totalLines)
+
+	for cellN, cellV := range cells {
+		wL := wrap(cellV.value, cols[cellN].computedWidth)
+		for i := 0; i < totalLines; i++ {
+			switch {
+			case i < len(wL):
+				lines[i].WriteString(renderCell(wL[i], cols[cellN].computedWidth, pad, cellV.style, cols[cellN].justify))
+			default:
+				lines[i].WriteString(renderCell("", cols[cellN].computedWidth, pad, cellV.style, cols[cellN].justify))
+			}
+		}
+	}
+	var out bytes.Buffer
+	for _, line := range lines {
+		out.Write(line.Bytes())
+		out.WriteString("\n")
+	}
+	return out.String()
+}
+
+func renderRow(cells []cell, cols []col, pad int) string {
+	wrappedLinesCount := make([]int, len(cells))
+
+	for i, cell1 := range cells {
+		wrappedL := wrap(cell1.value, cols[i].computedWidth)
+		wrappedLinesCount[i] = len(wrappedL)
+	}
+	_, totalLines := max(wrappedLinesCount)
+	lines := make([]bytes.Buffer, totalLines)
+
+	for cellN, cellV := range cells {
+		// override column style with cell style if different
+		var sty *style
+		switch {
+		case cellV.style != cols[cellN].style:
+			sty = cellV.style
+		default:
+			sty = cols[cellN].style
+		}
+
+		wL := wrap(cellV.value, cols[cellN].computedWidth)
+		for i := 0; i < totalLines; i++ {
+			switch {
+			case i < len(wL):
+				lines[i].WriteString(renderCell(wL[i], cols[cellN].computedWidth, pad, sty, cols[cellN].justify))
+			default:
+				lines[i].WriteString(renderCell("", cols[cellN].computedWidth, pad, sty, cols[cellN].justify))
+			}
+		}
+	}
+	var out bytes.Buffer
+	for _, line := range lines {
+		out.Write(line.Bytes())
+		out.WriteString("\n")
+	}
+	return out.String()
+}
+
+func renderCell(s string, width int, pad int, sty *style, justify int) string {
+	switch justify {
+	case jLeft:
+		return justLeft(s, width, pad, sty)
+	case jCenter:
+		return justCenter(s, width, pad, sty)
+	case jRight:
+		return justRight(s, width, pad, sty)
+	}
+	return ""
 }
 
 func justCenter(s string, width int, pad int, sty *style) string {
@@ -262,7 +358,7 @@ func wrapSubString(s string, w int, breakpts string) (wrapped string, remainder 
 	case ind > 0:
 		return strings.TrimSpace(s[0 : ind+1]), strings.TrimSpace(s[ind+1 : len(s)])
 	case ind == -1:
-		return strings.TrimSpace(s[0 : w+1]), strings.TrimSpace(s[w+1 : len(s)])
+		return strings.TrimSpace(s[0:w]), strings.TrimSpace(s[w:len(s)])
 	}
 	return "", ""
 }
@@ -272,6 +368,7 @@ func spaces(n int) string {
 	return strings.Repeat(" ", n)
 }
 
+// width returns the full table computed width including padding
 func (t *table) width() int {
 	return sum(extractComputedWidth(t)) + len(t.columns)*2*t.pad
 }
