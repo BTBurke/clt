@@ -201,6 +201,7 @@ func (t *table) Show() {
 
 }
 
+// returns the rendered table as a string
 func (t *table) renderTableAsString() string {
 	err := t.computeColWidths()
 	if err != nil {
@@ -221,6 +222,7 @@ func renderTitle(t *table) string {
 	return justCenter(t.title.value, t.width(), 0, t.title.style)
 }
 
+// renders the headers as a string
 func renderHeaders(cells []cell, cols []col, pad int) string {
 	wrappedLinesCount := make([]int, len(cells))
 
@@ -250,6 +252,8 @@ func renderHeaders(cells []cell, cols []col, pad int) string {
 	return out.String()
 }
 
+// renderRow renders the row as a styled string and implements the
+// wrapping of long strings where necessary
 func renderRow(cells []cell, cols []col, pad int) string {
 	wrappedLinesCount := make([]int, len(cells))
 
@@ -288,6 +292,7 @@ func renderRow(cells []cell, cols []col, pad int) string {
 	return out.String()
 }
 
+// renderCell renders the cell as a string using the correct justification
 func renderCell(s string, width int, pad int, sty *style, justify int) string {
 	switch justify {
 	case jLeft:
@@ -300,6 +305,7 @@ func renderCell(s string, width int, pad int, sty *style, justify int) string {
 	return ""
 }
 
+// justCenter is center-justified text with padding and style
 func justCenter(s string, width int, pad int, sty *style) string {
 	contentLen := len(s)
 	onLeft := (width - contentLen) / 2
@@ -313,6 +319,7 @@ func justCenter(s string, width int, pad int, sty *style) string {
 	return fmt.Sprintf("%s%s%s", spaces(onLeft+pad), sty.ApplyTo(s), spaces(onRight+pad))
 }
 
+// justLeft is left-justified text with padding and style
 func justLeft(s string, width int, pad int, sty *style) string {
 	contentLen := len(s)
 	onRight := width - contentLen
@@ -528,12 +535,4 @@ func mapAdd(n []int, inc int) []int {
 		ret[i] = num + inc
 	}
 	return ret
-}
-
-// oversize cell detector
-func osCell(c cell, w int, pad int) bool {
-	if c.width >= (w - 2*pad) {
-		return true
-	}
-	return false
 }

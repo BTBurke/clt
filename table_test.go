@@ -253,15 +253,15 @@ func TestRenderCell(t *testing.T) {
 	table.computeColWidths()
 	c.Convey("Cell should be rendered with correct justification", t, func() {
 		want := fmt.Sprintf("  %s      ", Style(Default).ApplyTo(s(10)))
-		st := renderCell(table.rows[0].cells[0].value, table.columns[0], table.pad)
+		st := renderCell(table.rows[0].cells[0].value, table.columns[0].computedWidth, table.pad, table.columns[0].style, table.columns[0].justify)
 		c.So(st, c.ShouldResemble, want)
 		table.columns[0].justify = jCenter
 		want = fmt.Sprintf("    %s    ", Style(Default).ApplyTo(s(10)))
-		st = renderCell(table.rows[0].cells[0].value, table.columns[0], table.pad)
+		st = renderCell(table.rows[0].cells[0].value, table.columns[0].computedWidth, table.pad, table.columns[0].style, table.columns[0].justify)
 		c.So(st, c.ShouldResemble, want)
 		table.columns[0].justify = jRight
 		want = fmt.Sprintf("      %s  ", Style(Default).ApplyTo(s(10)))
-		st = renderCell(table.rows[0].cells[0].value, table.columns[0], table.pad)
+		st = renderCell(table.rows[0].cells[0].value, table.columns[0].computedWidth, table.pad, table.columns[0].style, table.columns[0].justify)
 		c.So(st, c.ShouldResemble, want)
 	})
 }
