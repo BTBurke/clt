@@ -57,11 +57,7 @@ func main() {
 
 Produces:
 
-            Hockey Standings
-
- _Team_                 _Points_  _W_   _L_   _OT_
- Washington Capitals  42      18  11  6
- NJ Devils            31      12  18  7
+![console output](https://s3.amazonaws.com/btburke-github/simple-table.png)
 
 #### More examples
 See [examples/table_example.go](https://github.com/BTBurke/clt/blob/master/examples/table_example.go) for the example in the screenshot below.  Also, see the GoDoc for the details of the table library.
