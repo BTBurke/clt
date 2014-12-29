@@ -26,11 +26,47 @@ func main() {
 The general operation of the style function is to first call `clt.Style(<Style1>, <Style2>, ...)`.  This creates a style that can then be applied to a string via the `.ApplyTo(<string>)` method.
 
 ## Tables
+
+CLT provides an easy-to-use library for building text tables.  It provides layout algorithms for multi-column tables and the ability to style each column or individual cells using clt.Style.
+
+Tables detect the terminal width and intelligently decide how cell contents should be wrapped to fit on screen.
 ```go
 package main
 
 import "github.com/BTBurke/clt"
+
+func main() {
+
+	// Create a table with 3 columns
+	t := clt.NewTable(5)
+
+	// Add a title
+	t.SetTitle("Hockey Standings")
+
+	// Set column headers
+	t.SetColumnHeaders("Team", "Points", "W", "L", "OT")
+
+	// Add some rows
+	t.AddRow("Washington Capitals", "42", "18", "11", "6")
+	t.AddRow("NJ Devils", "31", "12", "18", "7")
+
+	// Render the table
+	t.Show()
+}
 ```
+
+Produces:
+
+```shell
+            Hockey Standings
+
+ _Team_                 _Points_  _W_   _L_   _OT_
+ Washington Capitals  42      18  11  6
+ NJ Devils            31      12  18  7
+ ```
+
+#### More examples
+See [examples/table_example.go](https://github.com/BTBurke/clt/blob/master/examples/table_example.go) for the example in the screenshot below.  Also, see the GoDoc for the details of the table library.
 
 ## Progress Bars
 

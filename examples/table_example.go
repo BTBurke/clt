@@ -3,23 +3,27 @@ package main
 import (
 	"fmt"
 	"github.com/BTBurke/clt"
+	"strings"
 )
 
 func main() {
+	sepLine := strings.Repeat("=", 15)
 
 	// A simple table that should fit in a standard terminal width 80
-	fmt.Printf("\n")
+	fmt.Printf("\n\n\n%s Simple Table Example %s\n\n\n", sepLine, sepLine)
 	SimpleTable()
 
 	// A table with long content that needs to be wrapped.  The table
 	// library has several strategies for fitting the content into the
 	// available terminal space.
-	fmt.Printf("\n\n")
+	fmt.Printf("\n\n\n%s Wrapped Table Example %s\n\n\n", sepLine, sepLine)
 	WrappedTable()
 
 	// Tables can be styled many ways, using the clt.Style library
-	fmt.Printf("\n\n")
+	fmt.Printf("\n\n\n%s Styled Table Example %s\n\n\n", sepLine, sepLine)
 	StyledTable()
+
+	fmt.Println("\n\n")
 }
 
 func SimpleTable() {

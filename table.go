@@ -188,7 +188,8 @@ func NewTable(numColumns int) *table {
 		MaxWidth:  w,
 		MaxHeight: h,
 		headers:   emptyHeaders,
-		pad:       2,
+		pad:       1,
+		title:     title{value: "", width: 0, style: Style(Default)},
 	}
 
 }
