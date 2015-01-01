@@ -60,7 +60,7 @@ Produces:
 ![console output](https://s3.amazonaws.com/btburke-github/simple-table.png)
 
 #### More examples
-See [examples/table_example.go](https://github.com/BTBurke/clt/blob/master/examples/table_example.go) for the example in the screenshot below.  Also, see the GoDoc for the details of the table library.
+See [examples/table_example.go](https://github.com/BTBurke/clt/blob/master/examples/table_example.go) for more examples.  Also, see the GoDoc for the details of the table library.
 
 ## Progress Bars
 
