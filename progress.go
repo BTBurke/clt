@@ -32,20 +32,20 @@ type Progress struct {
 
 // NewProgressSpinner returns a new spinner with prompt <message>
 // display length defaults to 30.
-func NewProgressSpinner(message string) *Progress {
+func NewProgressSpinner(format string, args ...interface{}) *Progress {
 	return &Progress{
 		style:         spinner,
-		Prompt:        message,
+		Prompt:        fmt.Sprintf(format, args...),
 		DisplayLength: 30,
 	}
 }
 
 // NewProgressBar returns a new progress bar with prompt <message>
 // display length defaults to 20
-func NewProgressBar(message string) *Progress {
+func NewProgressBar(format string, args ...interface{}) *Progress {
 	return &Progress{
 		style:         bar,
-		Prompt:        message,
+		Prompt:        fmt.Sprintf(format, args...),
 		DisplayLength: 20,
 	}
 }
