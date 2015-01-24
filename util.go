@@ -62,6 +62,7 @@ type ConsoleInput struct {
 	Prompt   string
 	Response string
 	Default  string
+	ValHint  string
 }
 
 // Ask renders the prompt, a default if it exists, and collects the response
@@ -73,6 +74,9 @@ func (c *ConsoleInput) Ask() {
 	}
 	reader := bufio.NewReader(os.Stdin)
 	c.Response, _ = reader.ReadString('\n')
+	if len(c.Default) > 0 && len(c.Response) == 0 {
+		c.Response = c.Default
+	}
 }
 
 // Ask renders the prompt and default if it exists, collects the response and
