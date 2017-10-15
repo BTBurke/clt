@@ -36,7 +36,7 @@ func TestOptionValidator(t *testing.T) {
 	failCases := []string{"bruins", "rangers"}
 	options := []string{"go", "washington", "capitals"}
 
-	valFunc := NewOptionValidator(options)
+	valFunc := OptionValidator(options)
 	for _, p := range passCases {
 		if !ValidateWithFunc(p, valFunc) {
 			t.Errorf("Failed OptionValidation for %s", p)

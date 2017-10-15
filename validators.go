@@ -35,8 +35,8 @@ func IsNo(s string) bool {
 //
 //}
 
-// NewOptionValidator builds a new validator from a []string of options
-func NewOptionValidator(options []string) ValidationFunc {
+// OptionValidator builds a new validator from a []string of options
+func OptionValidator(options []string) ValidationFunc {
 	return func(s string) bool {
 		return validateOptions(strings.ToLower(s), options)
 	}

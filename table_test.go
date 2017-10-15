@@ -2,10 +2,11 @@ package clt
 
 import (
 	"fmt"
-	c "github.com/smartystreets/goconvey/convey"
 	"reflect"
 	"strings"
 	"testing"
+
+	c "github.com/smartystreets/goconvey/convey"
 )
 
 func TestTerminalSizeCheck(t *testing.T) {
@@ -107,7 +108,7 @@ func TestSetColumnHeaders(t *testing.T) {
 
 func TestRenderHelpers(t *testing.T) {
 	n := []int{1, 3, 2}
-	table := &table{}
+	table := &Table{}
 	table.columns = []col{col{
 		naturalWidth:  10,
 		computedWidth: 12,

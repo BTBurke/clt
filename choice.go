@@ -2,6 +2,7 @@ package clt
 
 import (
 	"fmt"
+	"strconv"
 )
 
 func Choice(prompt string) string {
@@ -29,11 +30,12 @@ func ChoiceFromTable(prompt string, choices []string, def int) string {
 
 	t := NewTable(2)
 	for key, choice := range choices {
-		t.AddRow(str(key), choice)
+		t.AddRow(strconv.Itoa(key), choice)
 	}
 	tAsString := t.renderTableAsString()
 
 	c := NewConsoleInput()
 	c.Prompt = fmt.Sprintf("%s\n%s\nChoice [%s]: ", prompt, tAsString, choices[def])
-
+	c.AskValidate(OptionValidator(choices))
+	return c.Response
 }

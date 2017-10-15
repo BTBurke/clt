@@ -42,7 +42,10 @@ type col struct {
 	justify       int
 }
 
-type table struct {
+// Table is a table output to the console.  Use NewTable to construct the table with sensible defaults.
+// Tables detect the terminal width and step through a number of rendering strategies to intelligently
+// wrap column information to fit within the available space.
+type Table struct {
 	title        title
 	columns      []col
 	headers      []cell
@@ -74,7 +77,7 @@ func (r *row) addCell(c cell) {
 // AddRow adds a new row to the table given an array of strings for each column's
 // content.  You can set styles on this particular row by a subsequent call to
 // AddRowStyle.
-func (t *table) AddRow(rowStrings ...string) error {
+func (t *Table) AddRow(rowStrings ...string) error {
 	if len(rowStrings) > len(t.columns) {
 		return fmt.Errorf("Received %v columns but table only has %v columns.", len(rowStrings), len(t.columns))
 	}
@@ -90,7 +93,7 @@ func (t *table) AddRow(rowStrings ...string) error {
 }
 
 // AddStyledRow adds a new row to the table with custom styles for each cell.
-func (t *table) AddStyledRow(cells ...cell) error {
+func (t *Table) AddStyledRow(cells ...cell) error {
 	if len(cells) > len(t.columns) {
 		return fmt.Errorf("Received %v columns but table only has %v columns.", len(cells), len(t.columns))
 	}
@@ -112,7 +115,7 @@ func Cell(v string, sty *style) cell {
 
 // SetColumnStyles sets the default styles for each column in the row except
 // the column headers.
-func (t *table) SetColumnStyles(styles ...*style) error {
+func (t *Table) SetColumnStyles(styles ...*style) error {
 	if len(styles) > len(t.columns) {
 		return fmt.Errorf("Received %v column styles but table only has %v columns.", len(styles), len(t.columns))
 	}
@@ -124,20 +127,20 @@ func (t *table) SetColumnStyles(styles ...*style) error {
 
 // SetTitle sets the title for the table.  The default style is bold, but can
 // be changed using SetTitleStyle.
-func (t *table) SetTitle(s string) {
+func (t *Table) SetTitle(s string) {
 	t.title = title{value: s, width: len(s), style: Style(Bold)}
 }
 
 // SetTitleStyle sets the font style for the title.  The default is chalk.Bold
 // but can be set to any valid value of chalk.TextStyle
-func (t *table) SetTitleStyle(sty *style) {
+func (t *Table) SetTitleStyle(sty *style) {
 	t.title.style = sty
 }
 
 // SetColumnHeaders sets the column headers with an array of strings
 // The default style is Underline and Bold.  This can be changed through
 // a call to SetColumnHeaderStyles.
-func (t *table) SetColumnHeaders(headers ...string) error {
+func (t *Table) SetColumnHeaders(headers ...string) error {
 	if len(headers) > len(t.columns) {
 		return fmt.Errorf("More column headers than columns.")
 	}
@@ -151,7 +154,7 @@ func (t *table) SetColumnHeaders(headers ...string) error {
 
 // SetColumnHeaderStyles sets the column header styles. Returns an error
 // if there are more styles than the number of columns.
-func (t *table) SetColumnHeaderStyles(styles ...*style) error {
+func (t *Table) SetColumnHeaderStyles(styles ...*style) error {
 	if len(styles) > len(t.columns) {
 		return fmt.Errorf("Got more styles than number of columns")
 	}
@@ -165,7 +168,7 @@ func (t *table) SetColumnHeaderStyles(styles ...*style) error {
 // justfication to left, and attempting to detect the existing terminal size to
 // set size defaults.  You can change these defaults using SetJustification and
 // MaxWidth and MaxHeight properties.
-func NewTable(numColumns int) *table {
+func NewTable(numColumns int) *Table {
 	w, h, err := getTerminalSize()
 	if err != nil || w == 0 || h == 0 {
 		w = 80
@@ -183,7 +186,7 @@ func NewTable(numColumns int) *table {
 		defaultColumns[i].wrap = false
 	}
 
-	return &table{
+	return &Table{
 		columns:   defaultColumns,
 		MaxWidth:  w,
 		MaxHeight: h,
@@ -196,14 +199,14 @@ func NewTable(numColumns int) *table {
 
 // Show will render the table using the headers, title, and styles previously
 // set.
-func (t *table) Show() {
+func (t *Table) Show() {
 	tableAsString := t.renderTableAsString()
 	fmt.Printf(tableAsString)
 
 }
 
 // returns the rendered table as a string
-func (t *table) renderTableAsString() string {
+func (t *Table) renderTableAsString() string {
 	err := t.computeColWidths()
 	if err != nil {
 		// this error should never happen with fallback overflow strategy
@@ -219,7 +222,7 @@ func (t *table) renderTableAsString() string {
 }
 
 // renderTitle returns the title as a formatted string
-func renderTitle(t *table) string {
+func renderTitle(t *Table) string {
 	return justCenter(t.title.value, t.width(), 0, t.title.style)
 }
 
@@ -377,14 +380,14 @@ func spaces(n int) string {
 }
 
 // width returns the full table computed width including padding
-func (t *table) width() int {
+func (t *Table) width() int {
 	return sum(extractComputedWidth(t)) + len(t.columns)*2*t.pad
 }
 
 // automagically determine column widths.  See if it can fit inside
 // max width. If not, make intelligent guess about which should be
 // made multi-line
-func (t *table) computeColWidths() error {
+func (t *Table) computeColWidths() error {
 	computeNaturalWidths(t)
 	switch {
 	case simpleStrategy(t):
@@ -399,7 +402,7 @@ func (t *table) computeColWidths() error {
 
 // simpleStrategy sets all column widths to their natural width.
 // Successful if the whole table fits inside MaxWidth (including pad)
-func simpleStrategy(t *table) bool {
+func simpleStrategy(t *Table) bool {
 	natWidths := extractNatWidth(t)
 	colWPadded := mapAdd(natWidths, 2*t.pad)
 	totalWidth := sum(colWPadded)
@@ -415,7 +418,7 @@ func simpleStrategy(t *table) bool {
 
 // wrapWidestStrategy wraps the column with the largest natural width.
 // Successful if the wrapped width >50% of natural width
-func wrapWidestStrategy(t *table) bool {
+func wrapWidestStrategy(t *Table) bool {
 	naturalWidths := extractNatWidth(t)
 	maxI, maxW := max(naturalWidths)
 	tableMaxW := t.MaxWidth - 2*len(t.columns)*t.pad
@@ -438,7 +441,7 @@ func wrapWidestStrategy(t *table) bool {
 // overflowStrategy is the fallback if no other strategy makes the
 // table fit within the natural width. Sets all columns to their
 // natural width and lets the terminal wrap the lines.
-func overflowStrategy(t *table) bool {
+func overflowStrategy(t *Table) bool {
 	for i, col := range t.columns {
 		t.columns[i].computedWidth = col.naturalWidth
 	}
@@ -447,7 +450,7 @@ func overflowStrategy(t *table) bool {
 
 // convenience function for extracting natural width as []int
 // from []col
-func extractNatWidth(t *table) []int {
+func extractNatWidth(t *Table) []int {
 	out := make([]int, len(t.columns))
 	for i, col := range t.columns {
 		out[i] = col.naturalWidth
@@ -457,7 +460,7 @@ func extractNatWidth(t *table) []int {
 
 // convenience function for extracting computed width as []int
 // from []col
-func extractComputedWidth(t *table) []int {
+func extractComputedWidth(t *Table) []int {
 	out := make([]int, len(t.columns))
 	for i, col := range t.columns {
 		out[i] = col.computedWidth
@@ -466,7 +469,7 @@ func extractComputedWidth(t *table) []int {
 }
 
 // computes natural column widths and stores in table.columns.naturalWidth
-func computeNaturalWidths(t *table) {
+func computeNaturalWidths(t *Table) {
 	maxColW := make([]int, len(t.columns))
 
 	for _, row := range t.rows {
