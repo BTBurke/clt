@@ -79,7 +79,7 @@ type InputReader struct {
 	reader *bufio.Reader
 }
 
-// Ask renders the prompt, a default if it exists, and collects the response
+// Ask renders the prompt, a default and validation hint if it exists, and collects the response
 func (c *InputReader) Ask() (err error) {
 	if c.writer == nil {
 		c.writer = bufio.NewWriter(os.Stdout)
