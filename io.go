@@ -75,16 +75,24 @@ type InputReader struct {
 	Default  string
 	ValHint  string
 
+	writer *bufio.Writer
 	reader *bufio.Reader
 }
 
 // Ask renders the prompt, a default if it exists, and collects the response
 func (c *InputReader) Ask() (err error) {
-	if len(c.Default) > 0 {
-		fmt.Printf("%s  [%s]: ", c.Prompt, c.Default)
-	} else {
-		fmt.Printf("%s: ", c.Prompt)
+	if c.writer == nil {
+		c.writer = bufio.NewWriter(os.Stdout)
 	}
+	switch {
+	case len(c.Default) > 0:
+		fmt.Fprintf(c.writer, "%s  [%s]: ", c.Prompt, c.Default)
+	case len(c.ValHint) > 0:
+		fmt.Fprintf(c.writer, "%s (%s): ", c.Prompt, c.ValHint)
+	default:
+		fmt.Fprintf(c.writer, "%s: ", c.Prompt)
+	}
+	c.writer.Flush()
 
 	c.Response, err = c.reader.ReadString('\n')
 	if err != nil {
@@ -101,5 +109,6 @@ func (c *InputReader) Ask() (err error) {
 func NewInputReader() *InputReader {
 	return &InputReader{
 		reader: bufio.NewReader(os.Stdin),
+		writer: bufio.NewWriter(os.Stdout),
 	}
 }
