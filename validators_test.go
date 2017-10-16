@@ -9,7 +9,8 @@ func TestYesNo(t *testing.T) {
 	cases := []string{"yes", "y", "NO", "n"}
 
 	for _, case1 := range cases {
-		if !ValidateYesNo(case1) {
+		f := ValidateYesNo()
+		if ok, _ := f(case1); !ok {
 			t.Errorf("Failed YesNoValidation for %s", case1)
 		}
 	}
@@ -36,17 +37,16 @@ func TestOptionValidator(t *testing.T) {
 	failCases := []string{"bruins", "rangers"}
 	options := []string{"go", "washington", "capitals"}
 
-	valFunc := OptionValidator(options)
+	valFunc := AllowedOptions(options)
 	for _, p := range passCases {
-		if !ValidateWithFunc(p, valFunc) {
+		if ok, _ := valFunc(p); !ok {
 			t.Errorf("Failed OptionValidation for %s", p)
 		}
 	}
 
-	for _, f := range failCases {
-		if ValidateWithFunc(f, valFunc) {
-			t.Errorf("Failed OptionValidation for %s", f)
+	for _, p := range failCases {
+		if ok, _ := valFunc(p); ok {
+			t.Errorf("Failed OptionValidation for %s", p)
 		}
 	}
-
 }

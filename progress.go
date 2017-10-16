@@ -24,7 +24,7 @@ type Progress struct {
 	// the prompt and the ..., does not include status indicator
 	// at the end (e.g, the spinner, FAIL, OK, or XX%)
 	DisplayLength int
-	// Other non-exported fields
+
 	style int
 	cf    chan float64
 	c     chan int
@@ -154,7 +154,7 @@ func renderBar(p *Progress, c chan float64) {
 	}
 }
 
-// Progress updates the progress bar using a number [0, 1.0] to represent
+// Update the progress bar using a number [0, 1.0] to represent
 // the percentage complete
 func (p *Progress) Update(pct float64) {
 	if pct >= 1.0 {
