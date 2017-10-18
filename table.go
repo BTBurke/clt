@@ -3,6 +3,7 @@ package clt
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -54,6 +55,8 @@ type Table struct {
 	MaxWidth     int
 	MaxHeight    int
 	SkipTermSize bool
+
+	writer io.Writer
 }
 
 // Magic from the go source for ssh/terminal to find terminal size.  Because it is
@@ -79,7 +82,7 @@ func (r *row) addCell(c cell) {
 // AddRowStyle.
 func (t *Table) AddRow(rowStrings ...string) error {
 	if len(rowStrings) > len(t.columns) {
-		return fmt.Errorf("Received %v columns but table only has %v columns.", len(rowStrings), len(t.columns))
+		return fmt.Errorf("received %v columns but table only has %v columns", len(rowStrings), len(t.columns))
 	}
 	newRow := row{}
 	for i, rValue := range rowStrings {
@@ -95,7 +98,7 @@ func (t *Table) AddRow(rowStrings ...string) error {
 // AddStyledRow adds a new row to the table with custom styles for each cell.
 func (t *Table) AddStyledRow(cells ...cell) error {
 	if len(cells) > len(t.columns) {
-		return fmt.Errorf("Received %v columns but table only has %v columns.", len(cells), len(t.columns))
+		return fmt.Errorf("received %v columns but table only has %v columns", len(cells), len(t.columns))
 	}
 	newRow := row{}
 	for _, cell1 := range cells {
@@ -117,7 +120,7 @@ func Cell(v string, sty *style) cell {
 // the column headers.
 func (t *Table) SetColumnStyles(styles ...*style) error {
 	if len(styles) > len(t.columns) {
-		return fmt.Errorf("Received %v column styles but table only has %v columns.", len(styles), len(t.columns))
+		return fmt.Errorf("received %v column styles but table only has %v columns", len(styles), len(t.columns))
 	}
 	for i, sty := range styles {
 		t.columns[i].style = sty
@@ -142,7 +145,7 @@ func (t *Table) SetTitleStyle(sty *style) {
 // a call to SetColumnHeaderStyles.
 func (t *Table) SetColumnHeaders(headers ...string) error {
 	if len(headers) > len(t.columns) {
-		return fmt.Errorf("More column headers than columns.")
+		return fmt.Errorf("more column headers than columns")
 	}
 	for i, header := range headers {
 		t.headers[i].value = header
@@ -156,7 +159,7 @@ func (t *Table) SetColumnHeaders(headers ...string) error {
 // if there are more styles than the number of columns.
 func (t *Table) SetColumnHeaderStyles(styles ...*style) error {
 	if len(styles) > len(t.columns) {
-		return fmt.Errorf("Got more styles than number of columns")
+		return fmt.Errorf("more styles than number of columns")
 	}
 	for i, style := range styles {
 		t.headers[i].style = style
@@ -193,6 +196,7 @@ func NewTable(numColumns int) *Table {
 		headers:   emptyHeaders,
 		pad:       1,
 		title:     title{value: "", width: 0, style: Style(Default)},
+		writer:    os.Stdout,
 	}
 
 }
@@ -201,8 +205,13 @@ func NewTable(numColumns int) *Table {
 // set.
 func (t *Table) Show() {
 	tableAsString := t.renderTableAsString()
-	fmt.Printf(tableAsString)
+	fmt.Fprintf(t.writer, tableAsString)
 
+}
+
+// SetWriter sets the output writer if not writing to Stdout
+func (t *Table) SetWriter(w io.Writer) {
+	t.writer = w
 }
 
 // returns the rendered table as a string
@@ -397,7 +406,7 @@ func (t *Table) computeColWidths() error {
 	case overflowStrategy(t):
 		return nil
 	}
-	return fmt.Errorf("No table rendering strategy suitable.")
+	return fmt.Errorf("no table rendering strategy suitable")
 }
 
 // simpleStrategy sets all column widths to their natural width.
@@ -408,7 +417,7 @@ func simpleStrategy(t *Table) bool {
 	totalWidth := sum(colWPadded)
 
 	if totalWidth <= t.MaxWidth {
-		for i, _ := range t.columns {
+		for i := range t.columns {
 			t.columns[i].computedWidth = natWidths[i]
 		}
 		return true
@@ -424,7 +433,7 @@ func wrapWidestStrategy(t *Table) bool {
 	tableMaxW := t.MaxWidth - 2*len(t.columns)*t.pad
 	wrapW := tableMaxW - sumWithoutIndex(naturalWidths, maxI)
 	if wrappedWidthOk(wrapW, maxW) {
-		for i, _ := range t.columns {
+		for i := range t.columns {
 			switch i {
 			case maxI:
 				t.columns[i].computedWidth = wrapW

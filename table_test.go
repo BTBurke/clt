@@ -13,14 +13,14 @@ func TestTerminalSizeCheck(t *testing.T) {
 	t.Skipf("Terminal check skipped. No TTY.")
 	h, w, err := getTerminalSize()
 	if err != nil || h == -1 || w == -1 {
-		fmt.Printf("Cannot determine terminal size for Table.  McClintock will still work, but will not be able to automagically determine sizes.")
+		fmt.Printf("Cannot determine terminal size for Table. This will still work, but will not be able to automagically determine sizes.")
 	}
 }
 
 func TestCreateTable(t *testing.T) {
 	table := NewTable(3)
 	if len(table.columns) != 3 {
-		t.Errorf("Table should have %d columns, has %d.", 3, table.columns)
+		t.Errorf("Table should have %d columns, has %d.", 3, len(table.columns))
 	}
 	for _, col := range table.columns {
 		if !reflect.DeepEqual(col.justify, jLeft) {
@@ -40,7 +40,7 @@ func TestBasicAddRow(t *testing.T) {
 	if len(table.rows) != 1 {
 		t.Errorf("Table should have %d rows, has %d.", len(want), len(table.rows))
 	}
-	for idx, _ := range want {
+	for idx := range want {
 		gotX := table.rows[0].cells[idx].value
 		if gotX != want[idx] {
 			t.Errorf("Table cell 1 should be %s, got %s.", want[idx], gotX)
@@ -62,7 +62,7 @@ func TestCellLength(t *testing.T) {
 	want := []string{"---7---", "---8----"}
 	table := NewTable(len(want))
 	table.AddRow(want...)
-	for idx, _ := range want {
+	for idx := range want {
 		lenX := table.rows[0].cells[idx].width
 		if lenX != len(want[idx]) {
 			t.Errorf("Table cell length should be %v, got %v.", len(want[idx]), lenX)
@@ -75,14 +75,14 @@ func TestTitle(t *testing.T) {
 	table := NewTable(1)
 	table.SetTitle(want)
 	if table.title.value != want {
-		fmt.Errorf("Title should be %s, got %s", want, table.title.value)
+		t.Errorf("Title should be %s, got %s", want, table.title.value)
 	}
 	if table.title.width != len(want) {
-		fmt.Errorf("Title length should be %v, got %v.", len(want), table.title.width)
+		t.Errorf("Title length should be %v, got %v.", len(want), table.title.width)
 	}
-	if table.title.style != Style(Bold) {
-		fmt.Errorf("Default title style should be chalk.Bold.")
-	}
+	c.Convey("style defaults", t, func() {
+		c.So(table.title.style, c.ShouldResemble, Style(Bold))
+	})
 }
 
 func TestSetColumnHeaders(t *testing.T) {
@@ -101,7 +101,7 @@ func TestSetColumnHeaders(t *testing.T) {
 	}
 	for i, header := range table.headers {
 		if header.value != want[i].value {
-			fmt.Errorf("Header should be %s, got %s", want[i].value, header.value)
+			t.Errorf("Header should be %s, got %s", want[i].value, header.value)
 		}
 	}
 }
