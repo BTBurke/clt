@@ -3,7 +3,7 @@ package clt
 import "testing"
 
 func TestStyle1(t *testing.T) {
-	s := Style(Red)
+	s := Styled(Red)
 	expectBefore := "\x1b[31m"
 	expectAfter := "\x1b[39m"
 	if s.before != expectBefore || s.after != expectAfter {
@@ -12,7 +12,7 @@ func TestStyle1(t *testing.T) {
 }
 
 func TestStyle2(t *testing.T) {
-	s2 := Style(Red, Underline)
+	s2 := Styled(Red, Underline)
 	expectBefore2 := "\x1b[31;4m"
 	expectAfter2 := "\x1b[39;24m"
 	if s2.before != expectBefore2 || s2.after != expectAfter2 {
@@ -21,7 +21,7 @@ func TestStyle2(t *testing.T) {
 }
 
 func TestApplyTo(t *testing.T) {
-	s := Style(Red)
+	s := Styled(Red)
 	testString := "This is a test"
 	expect := "\x1b[31mThis is a test\x1b[39m"
 	applyResult := s.ApplyTo(testString)
@@ -31,7 +31,7 @@ func TestApplyTo(t *testing.T) {
 }
 
 func TestApplyTo2(t *testing.T) {
-	s := Style(Red, Underline)
+	s := Styled(Red, Underline)
 	testString := "This is a test"
 	expect := "\x1b[31;4mThis is a test\x1b[39;24m"
 	applyResult := s.ApplyTo(testString)

@@ -81,21 +81,21 @@ func TestTitle(t *testing.T) {
 		t.Errorf("Title length should be %v, got %v.", len(want), table.title.width)
 	}
 	c.Convey("style defaults", t, func() {
-		c.So(table.title.style, c.ShouldResemble, Style(Bold))
+		c.So(table.title.style, c.ShouldResemble, Styled(Bold))
 	})
 }
 
 func TestSetColumnHeaders(t *testing.T) {
 	table := NewTable(2)
 	table.SetColumnHeaders("Header1", "Header2")
-	want := []cell{cell{
+	want := []Cell{Cell{
 		value: "Header1",
-		style: Style(Bold, Underline),
+		style: Styled(Bold, Underline),
 		width: len("Header1"),
 	},
-		cell{
+		Cell{
 			value: "Header2",
-			style: Style(Bold, Underline),
+			style: Styled(Bold, Underline),
 			width: len("Header2"),
 		},
 	}
@@ -109,11 +109,11 @@ func TestSetColumnHeaders(t *testing.T) {
 func TestRenderHelpers(t *testing.T) {
 	n := []int{1, 3, 2}
 	table := &Table{}
-	table.columns = []col{col{
+	table.columns = []Col{Col{
 		naturalWidth:  10,
 		computedWidth: 12,
 	},
-		col{
+		Col{
 			naturalWidth:  12,
 			computedWidth: 14,
 		},
@@ -195,35 +195,35 @@ func TestJustifcation(t *testing.T) {
 	c.Convey("Center justify text with padding", t, func() {
 		width := 14
 		pad := 2
-		sty := Style(Default)
+		sty := Styled(Default)
 		want := fmt.Sprintf("       %s       ", sty.ApplyTo(s))
 		c.So(justCenter(s, width, pad, sty), c.ShouldEqual, want)
 	})
 	c.Convey("Center justify offest left on uneven", t, func() {
 		width := 13
 		pad := 2
-		sty := Style(Default)
+		sty := Styled(Default)
 		want := fmt.Sprintf("      %s       ", sty.ApplyTo(s))
 		c.So(justCenter(s, width, pad, sty), c.ShouldEqual, want)
 	})
 	c.Convey("Left justify text with padding", t, func() {
 		width := 8
 		pad := 2
-		sty := Style(Default)
+		sty := Styled(Default)
 		want := fmt.Sprintf("  %s      ", sty.ApplyTo(s))
 		c.So(justLeft(s, width, pad, sty), c.ShouldEqual, want)
 	})
 	c.Convey("Right justify text with padding", t, func() {
 		width := 8
 		pad := 2
-		sty := Style(Default)
+		sty := Styled(Default)
 		want := fmt.Sprintf("      %s  ", sty.ApplyTo(s))
 		c.So(justRight(s, width, pad, sty), c.ShouldEqual, want)
 	})
 	c.Convey("Fallback to string + padding if widths jacked up", t, func() {
 		width := 1
 		pad := 2
-		sty := Style(Default)
+		sty := Styled(Default)
 		want := fmt.Sprintf("  %s  ", sty.ApplyTo(s))
 		c.So(justCenter(s, width, pad, sty), c.ShouldEqual, want)
 		c.So(justLeft(s, width, pad, sty), c.ShouldEqual, want)
@@ -239,7 +239,7 @@ func TestRenderTitle(t *testing.T) {
 	table.MaxWidth = 30
 	table.SetTitle("Test Title")
 	table.computeColWidths()
-	want := fmt.Sprintf("     %s     ", Style(Bold).ApplyTo("Test Title"))
+	want := fmt.Sprintf("     %s     ", Styled(Bold).ApplyTo("Test Title"))
 	c.Convey("Title should be bold and centered", t, func() {
 		c.So(renderTitle(table), c.ShouldEqual, want)
 	})
@@ -253,15 +253,15 @@ func TestRenderCell(t *testing.T) {
 	table.pad = 2
 	table.computeColWidths()
 	c.Convey("Cell should be rendered with correct justification", t, func() {
-		want := fmt.Sprintf("  %s      ", Style(Default).ApplyTo(s(10)))
+		want := fmt.Sprintf("  %s      ", Styled(Default).ApplyTo(s(10)))
 		st := renderCell(table.rows[0].cells[0].value, table.columns[0].computedWidth, table.pad, table.columns[0].style, table.columns[0].justify)
 		c.So(st, c.ShouldResemble, want)
 		table.columns[0].justify = jCenter
-		want = fmt.Sprintf("    %s    ", Style(Default).ApplyTo(s(10)))
+		want = fmt.Sprintf("    %s    ", Styled(Default).ApplyTo(s(10)))
 		st = renderCell(table.rows[0].cells[0].value, table.columns[0].computedWidth, table.pad, table.columns[0].style, table.columns[0].justify)
 		c.So(st, c.ShouldResemble, want)
 		table.columns[0].justify = jRight
-		want = fmt.Sprintf("      %s  ", Style(Default).ApplyTo(s(10)))
+		want = fmt.Sprintf("      %s  ", Styled(Default).ApplyTo(s(10)))
 		st = renderCell(table.rows[0].cells[0].value, table.columns[0].computedWidth, table.pad, table.columns[0].style, table.columns[0].justify)
 		c.So(st, c.ShouldResemble, want)
 	})
@@ -274,8 +274,8 @@ func TestRenderRow(t *testing.T) {
 	table.pad = 2
 	table.MaxWidth = 28
 	table.computeColWidths()
-	c10 := Style(Default).ApplyTo(s(10))
-	cEmpty := Style(Default).ApplyTo("")
+	c10 := Styled(Default).ApplyTo(s(10))
+	cEmpty := Styled(Default).ApplyTo("")
 	c.Convey("Non-wrapped row rendered normally", t, func() {
 
 		want := fmt.Sprintf("  %s    %s  \n", c10, c10)
@@ -297,9 +297,9 @@ func TestRenderTable(t *testing.T) {
 	table.pad = 2
 	table.MaxWidth = 28
 	table.SetTitle("Test Table")
-	c10 := Style(Default).ApplyTo(s(10))
-	cEmpty := Style(Default).ApplyTo("")
-	cTitle := Style(Bold).ApplyTo("Test Table")
+	c10 := Styled(Default).ApplyTo(s(10))
+	cEmpty := Styled(Default).ApplyTo("")
+	cTitle := Styled(Bold).ApplyTo("Test Table")
 	c.Convey("Table with wrapped + non-wrapped rows rendered appropriately", t, func() {
 		want0 := fmt.Sprintf("         %s         \n\n", cTitle)
 		want1 := fmt.Sprintf("  %s    %s  \n", c10, c10)

@@ -14,13 +14,13 @@ import (
 // InteractiveSession creates a system for collecting user input
 // in response to questions and choices
 type InteractiveSession struct {
-	Prompt   string
-	Response string
-	Default  string
-	ValHint  string
+	Prompt  string
+	Default string
+	ValHint string
 
-	input  *bufio.Reader
-	output io.Writer
+	response string
+	input    *bufio.Reader
+	output   io.Writer
 }
 
 // NewInteractiveSession returns a new InteractiveSession outputting to Stdout
@@ -47,6 +47,13 @@ func (i *InteractiveSession) Pause() {
 }
 
 func (i *InteractiveSession) get() (err error) {
+	if i.output == nil {
+		i.output = bufio.NewWriter(os.Stdout)
+	}
+	if i.input == nil {
+		i.input = bufio.NewReader(os.Stdin)
+	}
+
 	switch {
 	case len(i.Default) > 0:
 		fmt.Fprintf(i.output, "%s  [%s]: ", i.Prompt, i.Default)
@@ -56,28 +63,28 @@ func (i *InteractiveSession) get() (err error) {
 		fmt.Fprintf(i.output, "%s: ", i.Prompt)
 	}
 
-	i.Response, err = i.input.ReadString('\n')
+	i.response, err = i.input.ReadString('\n')
 	if err != nil {
 		return err
 	}
-	if len(i.Default) > 0 && len(i.Response) == 0 {
-		i.Response = i.Default
+	if len(i.Default) > 0 && len(i.response) == 0 {
+		i.response = i.Default
 	}
-	i.Response = strings.TrimSpace(i.Response)
+	i.response = strings.TrimSpace(i.response)
 	return nil
 }
 
 // Warn adds an informational warning message to the user in format
 // Warning: <user defined string>
 func (i *InteractiveSession) Warn(format string, args ...interface{}) *InteractiveSession {
-	fmt.Fprintf(i.output, "%s: %s", Style(Yellow).ApplyTo("Warning"), fmt.Sprintf(format, args...))
+	fmt.Fprintf(i.output, "%s: %s", Styled(Yellow).ApplyTo("Warning"), fmt.Sprintf(format, args...))
 	return i
 }
 
 // Error is a terminator that gives an informational error message to the user in format
 // Error: <user defined string>.  Exits the program returning status code 1
 func (i *InteractiveSession) Error(format string, args ...interface{}) {
-	fmt.Fprintf(i.output, "\n\n%s: %s\n", Style(Red).ApplyTo("Error:"), fmt.Sprintf(format, args...))
+	fmt.Fprintf(i.output, "\n\n%s: %s\n", Styled(Red).ApplyTo("Error:"), fmt.Sprintf(format, args...))
 	os.Exit(1)
 }
 
@@ -102,12 +109,12 @@ func (i *InteractiveSession) ask(prompt string, def string, hint string, validat
 	i.ValHint = hint
 	i.get()
 	for _, validator := range validators {
-		if ok, err := validator(i.Response); !ok {
+		if ok, err := validator(i.response); !ok {
 			i.Say("\nError: %s\n\n", err)
 			i.ask(prompt, def, hint, validators...)
 		}
 	}
-	return i.Response
+	return i.response
 }
 
 // AskPassword is a terminator that asks for a password and does not echo input
@@ -150,10 +157,10 @@ func (i *InteractiveSession) AskFromTable(prompt string, choices map[string]stri
 	i.Prompt = fmt.Sprintf("%s\n%s\n\nChoice [%s]: ", prompt, tAsString, choices[def])
 	i.Default = def
 	i.get()
-	if ok, err := AllowedOptions(allKeys)(i.Response); !ok {
+	if ok, err := AllowedOptions(allKeys)(i.response); !ok {
 		i.Say("\nError: %s\n\n", err)
 		i.AskFromTable(prompt, choices, def)
 	}
 
-	return strings.TrimSpace(i.Response)
+	return strings.TrimSpace(i.response)
 }

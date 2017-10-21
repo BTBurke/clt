@@ -14,20 +14,20 @@ import (
 )
 
 func main() {
-	fmt.Printf("This is %s text\n", clt.Style(clt.Red).ApplyTo("red"))
-	fmt.Printf("This is %s text\n", clt.Style(clt.Blue, clt.Underline).ApplyTo("blue and underlined"))
-	fmt.Printf("This is %s text\n", clt.Style(clt.Blue, clt.Background(clt.White)).ApplyTo("blue on a white background"))
-	fmt.Printf("This is %s text\n", clt.Style(clt.Italic).ApplyTo("italic"))
-	fmt.Printf("This is %s text\n", clt.Style(clt.Bold).ApplyTo("bold"))
+	fmt.Printf("This is %s text\n", clt.Styled(clt.Red).ApplyTo("red"))
+	fmt.Printf("This is %s text\n", clt.Styled(clt.Blue, clt.Underline).ApplyTo("blue and underlined"))
+	fmt.Printf("This is %s text\n", clt.Styled(clt.Blue, clt.Background(clt.White)).ApplyTo("blue on a white background"))
+	fmt.Printf("This is %s text\n", clt.Styled(clt.Italic).ApplyTo("italic"))
+	fmt.Printf("This is %s text\n", clt.Styled(clt.Bold).ApplyTo("bold"))
 }
 ```
 ![console output](https://s3.amazonaws.com/btburke-github/styles_example.png)
 
-The general operation of the style function is to first call `clt.Style(<Style1>, <Style2>, ...)`.  This creates a style that can then be applied to a string via the `.ApplyTo(<string>)` method.
+The general operation of the style function is to first call `clt.Styled(<Style1>, <Style2>, ...)`.  This creates a style that can then be applied to a string via the `.ApplyTo(<string>)` method.
 
 ## Tables
 
-CLT provides an easy-to-use library for building text tables.  It provides layout algorithms for multi-column tables and the ability to style each column or individual cells using clt.Style.
+CLT provides an easy-to-use library for building text tables.  It provides layout algorithms for multi-column tables and the ability to style each column or individual cells using clt.Styled.
 
 Tables detect the terminal width and intelligently decide how cell contents should be wrapped to fit on screen.
 ```go

@@ -19,7 +19,7 @@ func main() {
 	fmt.Printf("\n\n\n%s Wrapped Table Example %s\n\n\n", sepLine, sepLine)
 	WrappedTable()
 
-	// Tables can be styled many ways, using the clt.Style library
+	// Tables can be styled many ways, using the clt.Styled library
 	fmt.Printf("\n\n\n%s Styled Table Example %s\n\n\n", sepLine, sepLine)
 	StyledTable()
 
@@ -72,13 +72,13 @@ func StyledTable() {
 	t.SetTitle("Styled Example Table")
 
 	// Set styles for each column
-	t.SetColumnStyles(clt.Style(clt.Green), clt.Style(clt.Default))
+	t.SetColumnStyles(clt.Styled(clt.Green), clt.Styled(clt.Default))
 
 	// Add some rows.  The OK will be green.
 	t.AddRow("OK", "Everything worked")
 
 	// Add another row with custom styling to override the green column
-	t.AddStyledRow(clt.Cell("FAIL", clt.Style(clt.Red)), clt.Cell("Something bad happened", clt.Style(clt.Default)))
+	t.AddStyledRow(clt.Cell("FAIL", clt.Styled(clt.Red)), clt.Cell("Something bad happened", clt.Styled(clt.Default)))
 
 	// Print the table
 	t.Show()

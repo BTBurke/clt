@@ -18,28 +18,28 @@ const (
 	jRight
 )
 
-type cell struct {
+type Cell struct {
 	value string
 	width int
-	style *style
+	style *Style
 }
 
-type title struct {
+type Title struct {
 	value string
 	width int
-	style *style
+	style *Style
 }
 
-type row struct {
-	cells []cell
+type Row struct {
+	cells []Cell
 }
 
-type col struct {
+type Col struct {
 	index         int
 	naturalWidth  int
 	computedWidth int
 	wrap          bool
-	style         *style
+	style         *Style
 	justify       int
 }
 
@@ -47,10 +47,10 @@ type col struct {
 // Tables detect the terminal width and step through a number of rendering strategies to intelligently
 // wrap column information to fit within the available space.
 type Table struct {
-	title        title
-	columns      []col
-	headers      []cell
-	rows         []row
+	title        Title
+	columns      []Col
+	headers      []Cell
+	rows         []Row
 	pad          int
 	MaxWidth     int
 	MaxHeight    int
@@ -73,7 +73,7 @@ func getTerminalSize() (width, height int, err error) {
 	return int(dimensions[1]), int(dimensions[0]), nil
 }
 
-func (r *row) addCell(c cell) {
+func (r *Row) addCell(c Cell) {
 	r.cells = append(r.cells, c)
 }
 
@@ -84,41 +84,41 @@ func (t *Table) AddRow(rowStrings ...string) error {
 	if len(rowStrings) > len(t.columns) {
 		return fmt.Errorf("received %v columns but table only has %v columns", len(rowStrings), len(t.columns))
 	}
-	newRow := row{}
+	newRow := Row{}
 	for i, rValue := range rowStrings {
-		newRow.addCell(cell{value: rValue, width: len(rValue), style: t.columns[i].style})
+		newRow.addCell(Cell{value: rValue, width: len(rValue), style: t.columns[i].style})
 	}
 	for len(newRow.cells) < len(t.columns) {
-		newRow.addCell(cell{value: "", width: 0, style: Style(Default)})
+		newRow.addCell(Cell{value: "", width: 0, style: Styled(Default)})
 	}
 	t.rows = append(t.rows, newRow)
 	return nil
 }
 
-// AddStyledRow adds a new row to the table with custom styles for each cell.
-func (t *Table) AddStyledRow(cells ...cell) error {
+// AddStyledRow adds a new row to the table with custom styles for each Cell.
+func (t *Table) AddStyledRow(cells ...Cell) error {
 	if len(cells) > len(t.columns) {
 		return fmt.Errorf("received %v columns but table only has %v columns", len(cells), len(t.columns))
 	}
-	newRow := row{}
+	newRow := Row{}
 	for _, cell1 := range cells {
 		newRow.addCell(cell1)
 	}
 	for len(newRow.cells) < len(t.columns) {
-		newRow.addCell(cell{value: "", width: 0, style: Style(Default)})
+		newRow.addCell(Cell{value: "", width: 0, style: Styled(Default)})
 	}
 	t.rows = append(t.rows, newRow)
 	return nil
 }
 
 // Cell returns a new cell with a custom style for use with AddStyledRow
-func Cell(v string, sty *style) cell {
-	return cell{value: v, width: len(v), style: sty}
+func StyledCell(v string, sty *Style) Cell {
+	return Cell{value: v, width: len(v), style: sty}
 }
 
 // SetColumnStyles sets the default styles for each column in the row except
 // the column headers.
-func (t *Table) SetColumnStyles(styles ...*style) error {
+func (t *Table) SetColumnStyles(styles ...*Style) error {
 	if len(styles) > len(t.columns) {
 		return fmt.Errorf("received %v column styles but table only has %v columns", len(styles), len(t.columns))
 	}
@@ -131,12 +131,12 @@ func (t *Table) SetColumnStyles(styles ...*style) error {
 // SetTitle sets the title for the table.  The default style is bold, but can
 // be changed using SetTitleStyle.
 func (t *Table) SetTitle(s string) {
-	t.title = title{value: s, width: len(s), style: Style(Bold)}
+	t.title = Title{value: s, width: len(s), style: Styled(Bold)}
 }
 
 // SetTitleStyle sets the font style for the title.  The default is chalk.Bold
 // but can be set to any valid value of chalk.TextStyle
-func (t *Table) SetTitleStyle(sty *style) {
+func (t *Table) SetTitleStyle(sty *Style) {
 	t.title.style = sty
 }
 
@@ -149,7 +149,7 @@ func (t *Table) SetColumnHeaders(headers ...string) error {
 	}
 	for i, header := range headers {
 		t.headers[i].value = header
-		t.headers[i].style = Style(Bold, Underline)
+		t.headers[i].style = Styled(Bold, Underline)
 		t.headers[i].width = len(header)
 	}
 	return nil
@@ -157,7 +157,7 @@ func (t *Table) SetColumnHeaders(headers ...string) error {
 
 // SetColumnHeaderStyles sets the column header styles. Returns an error
 // if there are more styles than the number of columns.
-func (t *Table) SetColumnHeaderStyles(styles ...*style) error {
+func (t *Table) SetColumnHeaderStyles(styles ...*Style) error {
 	if len(styles) > len(t.columns) {
 		return fmt.Errorf("more styles than number of columns")
 	}
@@ -180,11 +180,11 @@ func NewTable(numColumns int) *Table {
 
 	// Fill with defaults to skip complicated bounds checking on
 	// changing justify or row styles
-	defaultColumns := make([]col, numColumns)
-	emptyHeaders := make([]cell, numColumns)
+	defaultColumns := make([]Col, numColumns)
+	emptyHeaders := make([]Cell, numColumns)
 	for i := 0; i < numColumns; i++ {
 		defaultColumns[i].index = i
-		defaultColumns[i].style = Style(Default)
+		defaultColumns[i].style = Styled(Default)
 		defaultColumns[i].justify = jLeft
 		defaultColumns[i].wrap = false
 	}
@@ -195,7 +195,7 @@ func NewTable(numColumns int) *Table {
 		MaxHeight: h,
 		headers:   emptyHeaders,
 		pad:       1,
-		title:     title{value: "", width: 0, style: Style(Default)},
+		title:     Title{value: "", width: 0, style: Styled(Default)},
 		writer:    os.Stdout,
 	}
 
@@ -236,7 +236,7 @@ func renderTitle(t *Table) string {
 }
 
 // renders the headers as a string
-func renderHeaders(cells []cell, cols []col, pad int) string {
+func renderHeaders(cells []Cell, cols []Col, pad int) string {
 	wrappedLinesCount := make([]int, len(cells))
 
 	for i, cell1 := range cells {
@@ -267,7 +267,7 @@ func renderHeaders(cells []cell, cols []col, pad int) string {
 
 // renderRow renders the row as a styled string and implements the
 // wrapping of long strings where necessary
-func renderRow(cells []cell, cols []col, pad int) string {
+func renderRow(cells []Cell, cols []Col, pad int) string {
 	wrappedLinesCount := make([]int, len(cells))
 
 	for i, cell1 := range cells {
@@ -279,7 +279,7 @@ func renderRow(cells []cell, cols []col, pad int) string {
 
 	for cellN, cellV := range cells {
 		// override column style with cell style if different
-		var sty *style
+		var sty *Style
 		switch {
 		case cellV.style != cols[cellN].style:
 			sty = cellV.style
@@ -306,7 +306,7 @@ func renderRow(cells []cell, cols []col, pad int) string {
 }
 
 // renderCell renders the cell as a string using the correct justification
-func renderCell(s string, width int, pad int, sty *style, justify int) string {
+func renderCell(s string, width int, pad int, sty *Style, justify int) string {
 	switch justify {
 	case jLeft:
 		return justLeft(s, width, pad, sty)
@@ -319,7 +319,7 @@ func renderCell(s string, width int, pad int, sty *style, justify int) string {
 }
 
 // justCenter is center-justified text with padding and style
-func justCenter(s string, width int, pad int, sty *style) string {
+func justCenter(s string, width int, pad int, sty *Style) string {
 	contentLen := len(s)
 	onLeft := (width - contentLen) / 2
 	if onLeft < 0 {
@@ -333,7 +333,7 @@ func justCenter(s string, width int, pad int, sty *style) string {
 }
 
 // justLeft is left-justified text with padding and style
-func justLeft(s string, width int, pad int, sty *style) string {
+func justLeft(s string, width int, pad int, sty *Style) string {
 	contentLen := len(s)
 	onRight := width - contentLen
 	if onRight < 0 {
@@ -343,7 +343,7 @@ func justLeft(s string, width int, pad int, sty *style) string {
 }
 
 // justRight is right-justified text with padding and style
-func justRight(s string, width int, pad int, sty *style) string {
+func justRight(s string, width int, pad int, sty *Style) string {
 	contentLen := len(s)
 	onLeft := width - contentLen
 	if onLeft < 0 {
@@ -458,7 +458,7 @@ func overflowStrategy(t *Table) bool {
 }
 
 // convenience function for extracting natural width as []int
-// from []col
+// from []Col
 func extractNatWidth(t *Table) []int {
 	out := make([]int, len(t.columns))
 	for i, col := range t.columns {
@@ -468,7 +468,7 @@ func extractNatWidth(t *Table) []int {
 }
 
 // convenience function for extracting computed width as []int
-// from []col
+// from []Col
 func extractComputedWidth(t *Table) []int {
 	out := make([]int, len(t.columns))
 	for i, col := range t.columns {

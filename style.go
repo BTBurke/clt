@@ -5,34 +5,40 @@ import (
 	"fmt"
 )
 
-type color struct {
+// Color represents a ANSI-coded color style for text
+type Color struct {
 	before int
 	after  int
 }
 
-func (c color) codes() (int, int) { return c.before, c.after }
+// Codes returns ANSI styling values for a color
+func (c Color) Codes() (int, int) { return c.before, c.after }
 
-type textstyle struct {
+// Textstyle represents a ANSI-coded text style
+type Textstyle struct {
 	before int
 	after  int
 }
 
-func (t textstyle) codes() (int, int) { return t.before, t.after }
+// Codes returns ANSI styling values for a textstyle
+func (t Textstyle) Codes() (int, int) { return t.before, t.after }
 
-type styleInterface interface {
-	codes() (int, int)
+// Styler is an interface that is fulfilled by either a Color
+// or Textstyle to be applied to a string
+type Styler interface {
+	Codes() (int, int)
 }
 
-// style represents a computed style from one or more colors or textstyles
+// Style represents a computed style from one or more colors or textstyles
 // as the ANSI code suitable for terminal output
-type style struct {
+type Style struct {
 	before string
 	after  string
 }
 
-// ApplyTo applies styles created using the Style command to a string
+// ApplyTo applies styles created using the Styled command to a string
 // to generate an styled output using ANSI terminal codes
-func (s *style) ApplyTo(content string) string {
+func (s *Style) ApplyTo(content string) string {
 	var out bytes.Buffer
 	out.WriteString(s.before)
 	out.WriteString(content)
@@ -42,50 +48,53 @@ func (s *style) ApplyTo(content string) string {
 
 var (
 	// Colors
-	Black   = color{30, 39}
-	Red     = color{31, 39}
-	Green   = color{32, 39}
-	Yellow  = color{33, 39}
-	Blue    = color{34, 39}
-	Magenta = color{35, 39}
-	Cyan    = color{36, 39}
-	White   = color{37, 39}
-	Default = color{39, 39}
+	Black   = Color{30, 39}
+	Red     = Color{31, 39}
+	Green   = Color{32, 39}
+	Yellow  = Color{33, 39}
+	Blue    = Color{34, 39}
+	Magenta = Color{35, 39}
+	Cyan    = Color{36, 39}
+	White   = Color{37, 39}
+	Default = Color{39, 39}
 
 	// Shortcut Colors
-	K   = color{30, 39}
-	R   = color{31, 39}
-	G   = color{32, 39}
-	Y   = color{33, 39}
-	B   = color{34, 39}
-	M   = color{35, 39}
-	C   = color{36, 39}
-	W   = color{37, 39}
-	Def = color{39, 39}
+	K   = Color{30, 39}
+	R   = Color{31, 39}
+	G   = Color{32, 39}
+	Y   = Color{33, 39}
+	B   = Color{34, 39}
+	M   = Color{35, 39}
+	C   = Color{36, 39}
+	W   = Color{37, 39}
+	Def = Color{39, 39}
 
 	// Textstyles
-	Bold      = textstyle{1, 22}
-	Italic    = textstyle{3, 23}
-	Underline = textstyle{4, 24}
+	Bold      = Textstyle{1, 22}
+	Italic    = Textstyle{3, 23}
+	Underline = Textstyle{4, 24}
 )
 
 // Background returns a style that sets the background to the appropriate color
-func Background(c color) color {
+func Background(c Color) Color {
 	c.before += 10
 	c.after += 10
 	return c
 }
 
-func Style(s ...styleInterface) *style {
+// Styled contructs a composite style from one of more color or textstyle values.  Styles
+// can be applied to a string via ApplyTo or as a shortcut use SStyled which returns a string directly
+// Example:  Styled(White, Underline)
+func Styled(s ...Styler) *Style {
 	switch {
 	case len(s) == 1:
-		bef, aft := s[0].codes()
-		var computedStyle style
+		bef, aft := s[0].Codes()
+		var computedStyle Style
 		computedStyle.before = fmt.Sprintf("\x1b[%vm", bef)
 		computedStyle.after = fmt.Sprintf("\x1b[%vm", aft)
 		return &computedStyle
 	case len(s) > 1:
-		var computedStyle style
+		var computedStyle Style
 		var beforeConcat, afterConcat bytes.Buffer
 
 		beforeConcat.WriteString("\x1b[")
@@ -93,7 +102,7 @@ func Style(s ...styleInterface) *style {
 
 		var bef, aft int
 		for idx, sty := range s {
-			bef, aft = sty.codes()
+			bef, aft = sty.Codes()
 			if idx < len(s)-1 {
 				beforeConcat.WriteString(fmt.Sprintf("%v;", bef))
 				afterConcat.WriteString(fmt.Sprintf("%v;", aft))
@@ -106,5 +115,10 @@ func Style(s ...styleInterface) *style {
 		computedStyle.after = afterConcat.String()
 		return &computedStyle
 	}
-	return &style{}
+	return &Style{}
+}
+
+// SStyled is a shorter version of Styled(s...).ApplyTo(content)
+func SStyled(content string, s ...Styler) string {
+	return Styled(s...).ApplyTo(content)
 }

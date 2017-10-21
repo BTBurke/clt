@@ -2,7 +2,8 @@ package clt
 
 import (
 	"fmt"
-	"math"
+	"io"
+	"os"
 	"strings"
 	"time"
 )
@@ -25,9 +26,10 @@ type Progress struct {
 	// at the end (e.g, the spinner, FAIL, OK, or XX%)
 	DisplayLength int
 
-	style int
-	cf    chan float64
-	c     chan int
+	style  int
+	cf     chan float64
+	c      chan int
+	output io.Writer
 }
 
 // NewProgressSpinner returns a new spinner with prompt <message>
@@ -37,6 +39,7 @@ func NewProgressSpinner(format string, args ...interface{}) *Progress {
 		style:         spinner,
 		Prompt:        fmt.Sprintf(format, args...),
 		DisplayLength: 30,
+		output:        os.Stdout,
 	}
 }
 
@@ -47,6 +50,7 @@ func NewProgressBar(format string, args ...interface{}) *Progress {
 		style:         bar,
 		Prompt:        fmt.Sprintf(format, args...),
 		DisplayLength: 20,
+		output:        os.Stdout,
 	}
 }
 
@@ -90,6 +94,9 @@ func (p *Progress) Fail() {
 }
 
 func renderSpinner(p *Progress, c chan int) {
+	if p.output == nil {
+		p.output = os.Stdout
+	}
 	promptLen := len(p.Prompt)
 	dotLen := p.DisplayLength - promptLen
 	if dotLen < 3 {
@@ -100,33 +107,27 @@ func renderSpinner(p *Progress, c chan int) {
 		case result := <-c:
 			switch result {
 			case success:
-				fmt.Printf("\x1b[?25h\r%s%s[%s]\n", p.Prompt, strings.Repeat(".", dotLen), Style(Green).ApplyTo("OK"))
+				fmt.Fprintf(p.output, "\x1b[?25h\r%s%s[%s]\n", p.Prompt, strings.Repeat(".", dotLen), Styled(Green).ApplyTo("OK"))
 			case fail:
-				fmt.Printf("\x1b[?25h\r%s%s[%s]\n", p.Prompt, strings.Repeat(".", dotLen), Style(Red).ApplyTo("FAIL"))
+				fmt.Fprintf(p.output, "\x1b[?25h\r%s%s[%s]\n", p.Prompt, strings.Repeat(".", dotLen), Styled(Red).ApplyTo("FAIL"))
 			}
 			return
 		default:
-			fmt.Printf("\x1b[?25l\r%s%s[%s]", p.Prompt, strings.Repeat(".", dotLen), spinLookup(i))
+			fmt.Fprintf(p.output, "\x1b[?25l\r%s%s[%s]", p.Prompt, strings.Repeat(".", dotLen), spinLookup(i))
 			time.Sleep(time.Duration(250) * time.Millisecond)
 		}
 	}
 }
 
 func spinLookup(i int) string {
-	switch int(math.Mod(float64(i), 4.0)) {
-	case 0:
-		return "|"
-	case 1:
-		return "/"
-	case 2:
-		return "-"
-	case 3:
-		return "\\"
-	}
-	return ""
+	spinner := []string{"|", "/", "-", "\\"}
+	return spinner[i%len(spinner)]
 }
 
 func renderBar(p *Progress, c chan float64) {
+	if p.output == nil {
+		p.output = os.Stdout
+	}
 	var result float64
 	eqLen := 0
 	spLen := p.DisplayLength
@@ -138,18 +139,18 @@ func renderBar(p *Progress, c chan float64) {
 			spLen = p.DisplayLength - eqLen
 			switch {
 			case result == -1.0:
-				fmt.Printf("\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("=", p.DisplayLength), Style(Green).ApplyTo("100%"))
-				fmt.Printf("\x1b[?25h\n")
+				fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("=", p.DisplayLength), Styled(Green).ApplyTo("100%"))
+				fmt.Fprintf(p.output, "\x1b[?25h\n")
 				return
 			case result == -2.0:
-				fmt.Printf("\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("X", p.DisplayLength), Style(Red).ApplyTo("FAIL"))
-				fmt.Printf("\x1b[?25h\n")
+				fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("X", p.DisplayLength), Styled(Red).ApplyTo("FAIL"))
+				fmt.Fprintf(p.output, "\x1b[?25h\n")
 				return
 			case result >= 0.0:
-				fmt.Printf("\x1b[?25l\r%s: [%s%s] %2.0f%%", p.Prompt, strings.Repeat("=", eqLen), strings.Repeat(" ", spLen), 100.0*result)
+				fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s%s] %2.0f%%", p.Prompt, strings.Repeat("=", eqLen), strings.Repeat(" ", spLen), 100.0*result)
 			}
 		default:
-			fmt.Printf("\x1b[?25l\r%s: [%s%s] %2.0f%%", p.Prompt, strings.Repeat("=", eqLen), strings.Repeat(" ", spLen), 100.0*result)
+			fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s%s] %2.0f%%", p.Prompt, strings.Repeat("=", eqLen), strings.Repeat(" ", spLen), 100.0*result)
 		}
 	}
 }
