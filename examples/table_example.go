@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/BTBurke/clt"
 	"strings"
+
+	"github.com/BTBurke/clt"
 )
 
 func main() {
@@ -78,7 +79,7 @@ func StyledTable() {
 	t.AddRow("OK", "Everything worked")
 
 	// Add another row with custom styling to override the green column
-	t.AddStyledRow(clt.Cell("FAIL", clt.Styled(clt.Red)), clt.Cell("Something bad happened", clt.Styled(clt.Default)))
+	t.AddStyledRow(clt.StyledCell("FAIL", clt.Styled(clt.Red)), clt.StyledCell("Something bad happened", clt.Styled(clt.Default)))
 
 	// Print the table
 	t.Show()
