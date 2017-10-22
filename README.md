@@ -5,6 +5,7 @@ CLT is a toolset for building elegant command line interfaces in Go.  CLT includ
 Go Doc documentation is available at [Godoc] and examples are located in the examples directory.  This readme strives to show you the major features.
 
 ## Styled Text
+
 ```go
 package main
 
@@ -15,15 +16,15 @@ import (
 
 func main() {
 	fmt.Printf("This is %s text\n", clt.Styled(clt.Red).ApplyTo("red"))
-	fmt.Printf("This is %s text\n", clt.Styled(clt.Blue, clt.Underline).ApplyTo("blue and underlined"))
-	fmt.Printf("This is %s text\n", clt.Styled(clt.Blue, clt.Background(clt.White)).ApplyTo("blue on a white background"))
+	fmt.Printf("This is %s text\n", clt.SStyled("blue and underlined", clt.Blue, clt.Underline))
+	fmt.Printf("This is %s text\n", clt.SStyled("blue on a white background", clt.Blue, clt.Background(clt.White))
 	fmt.Printf("This is %s text\n", clt.Styled(clt.Italic).ApplyTo("italic"))
-	fmt.Printf("This is %s text\n", clt.Styled(clt.Bold).ApplyTo("bold"))
+	fmt.Printf("This is %s text\n", clt.SStyled("bold", clt.Bold)
 }
 ```
 ![console output](https://s3.amazonaws.com/btburke-github/styles_example.png)
 
-The general operation of the style function is to first call `clt.Styled(<Style1>, <Style2>, ...)`.  This creates a style that can then be applied to a string via the `.ApplyTo(<string>)` method.
+The general operation of the style function is to first call `clt.Styled(<Style1>, <Style2>, ...)`.  This creates a style that can then be applied to a string via the `.ApplyTo(<string>)` method.  A shortcut method `clt.SStyled("string", styles...)` can help eliminate some of the boilerplate.
 
 ## Tables
 
