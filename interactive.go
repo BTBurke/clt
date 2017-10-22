@@ -170,7 +170,7 @@ func (i *InteractiveSession) AskPassword(validators ...ValidationFunc) string {
 	return strings.TrimSpace(pw)
 }
 
-func (i *InteractiveSession) YesNo(prompt string, defaultChoice string) string {
+func (i *InteractiveSession) AskYesNo(prompt string, defaultChoice string) string {
 	switch def := strings.ToLower(defaultChoice); def {
 	case "y", "yes":
 		i.Default = "Y/n"

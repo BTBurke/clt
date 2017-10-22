@@ -82,7 +82,22 @@ Progress bars use go routines to update the progress status while your app does 
 
 CLT provides building blocks to create interactive sessions, letting you prompt a user to select from a set of options, answer questions, or enter a username/password.
 
-See [examples/interactive_example.go](https://github.com/BTBurke/clt/blob/master/examples/progress_example.go) for examples of creating interactive interfaces.
+See [examples/interactive_example.go](https://github.com/BTBurke/clt/blob/master/examples/interactive_example.go) for examples of creating interactive interfaces.
+
+#### Interactions
+
+|---------|-------------|
+| Ask | Ask for a response with optional validation |
+| AskWithDefault | Ask with a preconfigured default value |
+| AskWithHint | Ask with a hint that shows how the input should be formatted |
+| AskPassword | Ask for a password without any echo to the terminal while the user types |
+| AskYesNo | Ask a yes or no question with a default to either |
+| AskFromTable | User picks an option from a table of possibilities |
+| Pause | Paginate some output with `Press [Enter] to continue.` |
+| PauseWithPrompt | Paginate some output with a custom prompt to continue |
+| Warn | Issue a warning that is visually separated from other text by style changes |
+| Error | Show an error message and exit the process |
+
 
 
 

@@ -28,7 +28,7 @@ func AskYesNo() {
 	i := clt.NewInteractiveSession()
 	resp := i.Say("This is an example of asking a yes/no question and maybe you want to add a warning as well.").
 		Warn("%s", clt.SStyled("Bad things can happen if you do this!", clt.Bold)).
-		YesNo("Do you really want to do this?", "n")
+		AskYesNo("Do you really want to do this?", "n")
 	switch {
 	case clt.IsYes(resp):
 		i.Say("Ok, I'll go ahead and do that.")
@@ -47,4 +47,8 @@ func ChooseFromOptions() {
 	resp := i.Say("You can also create a list of options and let them select from the list.").
 		AskFromTable("Pick a choice from the table", choices, "a")
 	i.Say("Ok, let's do: %s", choices[resp])
+}
+
+func PasswordPrompt() {
+
 }
