@@ -42,7 +42,7 @@ func TestSay(t *testing.T) {
 			case "ask":
 				got = sess.ask(tc.Prompt, tc.Default, tc.ValHint, tc.Validators...)
 			case "yn":
-				got = sess.YesNo(tc.Prompt, tc.Default)
+				got = sess.AskYesNo(tc.Prompt, tc.Default)
 			default:
 				t.Errorf("unexpected test: %s", tc.Method)
 			}
