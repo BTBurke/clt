@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/BTBurke/snapshot"
+  packages = ["."]
+  revision = "9a13c3e430e23e833930bb20cba541a88503d118"
+
+[[projects]]
+  branch = "master"
   name = "github.com/gopherjs/gopherjs"
   packages = ["js"]
   revision = "415225646bb92c4449bb484646f2c95a98402f6f"
@@ -12,6 +18,12 @@
   packages = ["."]
   revision = "77f18212c9c7edc9bd6a33d383a7b545ce62f064"
   version = "v4.2.1"
+
+[[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/smartystreets/assertions"
@@ -40,6 +52,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bf74f14a6966904d1bbf119483c8c9d44a35f252131b8dfacb16e39149c0b623"
+  inputs-digest = "04dba1a441c8c716c515d17c98b526fa3c20b189fc4b57cb900b601d370cf2c8"
   solver-name = "gps-cdcl"
   solver-version = 1
