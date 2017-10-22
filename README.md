@@ -1,4 +1,4 @@
-[![](https://godoc.org/github.com/BTBurke/clt?status.svg)](http://godoc.org/github.com/BTBurke/clt)
+[![](https://godoc.org/github.com/BTBurke/clt?status.svg)](http://godoc.org/github.com/BTBurke/clt) [![Travis](https://img.shields.io/travis/BTBurke/clt.svg)]()
 
 CLT - Command Line Tools for Go
 ===
