@@ -199,7 +199,7 @@ func (t *Table) Title(s string, styles ...Styler) *Table {
 
 // ColumnHeaders sets the column headers with an array of strings
 // The default style is Underline and Bold.  This can be changed through
-// a call to SetColumnHeaderStyles.
+// a call to ColumnHeaderStyles.
 func (t *Table) ColumnHeaders(headers ...string) *Table {
 	for i, header := range headers {
 		if i >= len(t.columns) {
@@ -426,7 +426,12 @@ func justCenter(s string, width int, pad int, sty *Style) string {
 	if onRight < 0 {
 		onRight = 0
 	}
-	return fmt.Sprintf("%s%s%s", spaces(onLeft+pad), sty.ApplyTo(s), spaces(onRight+pad))
+	switch {
+	case sty == nil:
+		return fmt.Sprintf("%s%s%s", spaces(onLeft+pad), s, spaces(onRight+pad))
+	default:
+		return fmt.Sprintf("%s%s%s", spaces(onLeft+pad), sty.ApplyTo(s), spaces(onRight+pad))
+	}
 }
 
 // justLeft is left-justified text with padding and style
@@ -436,7 +441,12 @@ func justLeft(s string, width int, pad int, sty *Style) string {
 	if onRight < 0 {
 		onRight = 0
 	}
-	return fmt.Sprintf("%s%s%s", spaces(pad), sty.ApplyTo(s), spaces(onRight+pad))
+	switch {
+	case sty == nil:
+		return fmt.Sprintf("%s%s%s", spaces(pad), s, spaces(onRight+pad))
+	default:
+		return fmt.Sprintf("%s%s%s", spaces(pad), sty.ApplyTo(s), spaces(onRight+pad))
+	}
 }
 
 // justRight is right-justified text with padding and style
@@ -446,7 +456,13 @@ func justRight(s string, width int, pad int, sty *Style) string {
 	if onLeft < 0 {
 		onLeft = 0
 	}
-	return fmt.Sprintf("%s%s%s", spaces(onLeft+pad), sty.ApplyTo(s), spaces(pad))
+	switch {
+	case sty == nil:
+		return fmt.Sprintf("%s%s%s", spaces(onLeft+pad), s, spaces(pad))
+	default:
+		return fmt.Sprintf("%s%s%s", spaces(onLeft+pad), sty.ApplyTo(s), spaces(pad))
+	}
+
 }
 
 // wrap will break long lines on breakpoints space, :, ., /, \, -.  If

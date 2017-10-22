@@ -11,6 +11,12 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+type getOpt int
+
+const (
+	noColon getOpt = iota
+)
+
 // InteractiveSession creates a system for collecting user input
 // in response to questions and choices
 type InteractiveSession struct {
@@ -28,14 +34,14 @@ type InteractiveSession struct {
 func NewInteractiveSession() *InteractiveSession {
 	return &InteractiveSession{
 		input:  bufio.NewReader(os.Stdin),
-		output: bufio.NewWriter(os.Stdout),
+		output: os.Stdout,
 	}
 }
 
 // Say is a short form of fmt.Fprintf but allows you to chain additional terminators to
 // the interactive session to collect user input
 func (i *InteractiveSession) Say(format string, args ...interface{}) *InteractiveSession {
-	fmt.Fprintf(i.output, format, args...)
+	fmt.Fprintf(i.output, fmt.Sprintf("\n%s\n", format), args...)
 	return i
 }
 
@@ -43,8 +49,8 @@ func (i *InteractiveSession) Say(format string, args ...interface{}) *Interactiv
 // that returns *InteractiveSession and will wait for the user to press enter to continue.
 // It is useful for long-form content or paging.
 func (i *InteractiveSession) Pause() {
-	i.Prompt = "\n\nPress [Enter] to continue.\n\n"
-	i.get()
+	i.Prompt = "\nPress [Enter] to continue."
+	i.get(noColon)
 }
 
 // PauseWithPrompt is a terminator that will render long-form text added via the another method
@@ -52,10 +58,19 @@ func (i *InteractiveSession) Pause() {
 // This will use the custom prompt specified by format and args.
 func (i *InteractiveSession) PauseWithPrompt(format string, args ...interface{}) {
 	i.Prompt = fmt.Sprintf(format, args...)
-	i.get()
+	i.get(noColon)
 }
 
-func (i *InteractiveSession) get() (err error) {
+func (i *InteractiveSession) get(opts ...getOpt) (err error) {
+	contains := func(wanted getOpt) bool {
+		for _, opt := range opts {
+			if opt == wanted {
+				return true
+			}
+		}
+		return false
+	}
+
 	if i.output == nil {
 		i.output = bufio.NewWriter(os.Stdout)
 	}
@@ -68,25 +83,36 @@ func (i *InteractiveSession) get() (err error) {
 		fmt.Fprintf(i.output, "%s  [%s]: ", i.Prompt, i.Default)
 	case len(i.ValHint) > 0:
 		fmt.Fprintf(i.output, "%s (%s): ", i.Prompt, i.ValHint)
-	default:
+	case contains(noColon):
+		fmt.Fprintf(i.output, "%s", i.Prompt)
+	case len(i.Prompt) > 0:
 		fmt.Fprintf(i.output, "%s: ", i.Prompt)
+	default:
 	}
 
 	i.response, err = i.input.ReadString('\n')
 	if err != nil {
 		return err
 	}
+	i.response = strings.TrimRight(i.response, " \n")
 	if len(i.Default) > 0 && len(i.response) == 0 {
-		i.response = i.Default
+		switch i.Default {
+		case "y/N":
+			i.response = "n"
+		case "Y/n":
+			i.response = "y"
+		default:
+			i.response = i.Default
+		}
 	}
-	i.response = strings.TrimSpace(i.response)
+
 	return nil
 }
 
 // Warn adds an informational warning message to the user in format
 // Warning: <user defined string>
 func (i *InteractiveSession) Warn(format string, args ...interface{}) *InteractiveSession {
-	fmt.Fprintf(i.output, "%s: %s", Styled(Yellow).ApplyTo("Warning"), fmt.Sprintf(format, args...))
+	fmt.Fprintf(i.output, "\n%s: %s\n", Styled(Yellow).ApplyTo("Warning"), fmt.Sprintf(format, args...))
 	return i
 }
 
@@ -155,7 +181,8 @@ func (i *InteractiveSession) YesNo(prompt string, defaultChoice string) string {
 }
 
 func (i *InteractiveSession) AskFromTable(prompt string, choices map[string]string, def string) string {
-	t := NewTable(2)
+	t := NewTable(2).
+		ColumnHeaders("Option", "")
 	var allKeys []string
 	for key, choice := range choices {
 		t.AddRow(key, choice)
@@ -163,7 +190,7 @@ func (i *InteractiveSession) AskFromTable(prompt string, choices map[string]stri
 	}
 	tAsString := t.AsString()
 
-	i.Prompt = fmt.Sprintf("%s\n%s\n\nChoice [%s]: ", prompt, tAsString, choices[def])
+	i.Prompt = fmt.Sprintf("\n%s%s\nChoice", prompt, tAsString)
 	i.Default = def
 	i.get()
 	if ok, err := AllowedOptions(allKeys)(i.response); !ok {

@@ -78,6 +78,11 @@ See [examples/progress_example.go](https://github.com/BTBurke/clt/blob/master/ex
 
 Progress bars use go routines to update the progress status while your app does other processing.  Remember to close out the progress element with either a call to `Success()` or `Fail()` to terminate this routine.
 
+## Interactive Sessions
+
+CLT provides building blocks to create interactive sessions, letting you prompt a user to select from a set of options, answer questions, or enter a username/password.
+
+See [examples/interactive_example.go](https://github.com/BTBurke/clt/blob/master/examples/progress_example.go) for examples of creating interactive interfaces.
 
 
 

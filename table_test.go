@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/BTBurke/snapshot"
 	c "github.com/smartystreets/goconvey/convey"
 )
 
@@ -307,5 +308,15 @@ func TestRenderTable(t *testing.T) {
 		want := want0 + want1 + want2
 		renderedTable := table.AsString()
 		c.So(renderedTable, c.ShouldResemble, want)
+	})
+}
+
+func TestHeadersShort(t *testing.T) {
+	table := NewTable(2).
+		ColumnHeaders("test")
+	c.Convey("Table with only one column header set", t, func() {
+		c.So(table.headers[0].value, c.ShouldEqual, "test")
+		c.So(table.headers[1].value, c.ShouldResemble, "")
+		snapshot.Assert(t, []byte(table.AsString()))
 	})
 }
