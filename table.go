@@ -18,12 +18,16 @@ const (
 	jRight
 )
 
+// Cell represents a cell in the table.  Most often you'll create a cell using StyledCell
+// in conjuction with AddStyledRow
 type Cell struct {
 	value string
 	width int
 	style *Style
 }
 
+// Title is a special cell that is rendered at the center top of the table that can contain
+// its own styling.
 type Title struct {
 	value string
 	width int
@@ -47,21 +51,39 @@ type Col struct {
 // Tables detect the terminal width and step through a number of rendering strategies to intelligently
 // wrap column information to fit within the available space.
 type Table struct {
-	title        Title
-	columns      []Col
-	headers      []Cell
-	rows         []Row
-	pad          int
-	MaxWidth     int
-	MaxHeight    int
-	SkipTermSize bool
+	title     Title
+	columns   []Col
+	headers   []Cell
+	rows      []Row
+	pad       int
+	maxWidth  int
+	maxHeight int
 
 	writer io.Writer
 }
 
+// TableOption is a function that sets an option on a table
+type TableOption func(t *Table) error
+
+func MaxHeight(h int) TableOption {
+	return func(t *Table) error {
+		t.maxHeight = h
+		return nil
+	}
+}
+
+func MaxWidth(w int) TableOption {
+	return func(t *Table) error {
+		if t.maxWidth > w {
+			t.maxWidth = w
+		}
+		return nil
+	}
+}
+
 // Magic from the go source for ssh/terminal to find terminal size.  Because it is
 // difficult to test this implementation across os/terminal combinations, you can skip
-// this check by setting Table.SkipTermSize=true and set the Table.MaxWidth and
+// this check by setting Table.SkipTermSize=true and set the Table.maxWidth and
 // Table.MaxHeight manually.  Or, Table will set appropriate conservative defaults.
 func getTerminalSize() (width, height int, err error) {
 	fd := os.Stdout.Fd()
@@ -78,100 +100,103 @@ func (r *Row) addCell(c Cell) {
 }
 
 // AddRow adds a new row to the table given an array of strings for each column's
-// content.  You can set styles on this particular row by a subsequent call to
-// AddRowStyle.
-func (t *Table) AddRow(rowStrings ...string) error {
-	if len(rowStrings) > len(t.columns) {
-		return fmt.Errorf("received %v columns but table only has %v columns", len(rowStrings), len(t.columns))
-	}
+// content.  You can set styles on a row by using AddStyledRow instead.  If you add more cells
+// than available columns, the cells will be silently truncated.  If there are fewer values than columns,
+// the remaining columns will be empty.
+func (t *Table) AddRow(rowStrings ...string) *Table {
 	newRow := Row{}
 	for i, rValue := range rowStrings {
+		if i >= len(t.columns) {
+			break
+		}
 		newRow.addCell(Cell{value: rValue, width: len(rValue), style: t.columns[i].style})
 	}
 	for len(newRow.cells) < len(t.columns) {
 		newRow.addCell(Cell{value: "", width: 0, style: Styled(Default)})
 	}
 	t.rows = append(t.rows, newRow)
-	return nil
+	return t
 }
 
-// AddStyledRow adds a new row to the table with custom styles for each Cell.
-func (t *Table) AddStyledRow(cells ...Cell) error {
-	if len(cells) > len(t.columns) {
-		return fmt.Errorf("received %v columns but table only has %v columns", len(cells), len(t.columns))
-	}
+// AddStyledRow adds a new row to the table with custom styles for each Cell.  If you add more cells
+// than available columns, the cells will be silently truncated.  If there are fewer values than columns,
+// the remaining columns will be empty.
+func (t *Table) AddStyledRow(cells ...Cell) *Table {
 	newRow := Row{}
-	for _, cell1 := range cells {
+	for i, cell1 := range cells {
+		if i >= len(t.columns) {
+			break
+		}
 		newRow.addCell(cell1)
 	}
 	for len(newRow.cells) < len(t.columns) {
 		newRow.addCell(Cell{value: "", width: 0, style: Styled(Default)})
 	}
 	t.rows = append(t.rows, newRow)
-	return nil
+	return t
 }
 
-// Cell returns a new cell with a custom style for use with AddStyledRow
+// StyledCell returns a new cell with a custom style for use with AddStyledRow
 func StyledCell(v string, sty *Style) Cell {
 	return Cell{value: v, width: len(v), style: sty}
 }
 
-// SetColumnStyles sets the default styles for each column in the row except
+// ColumnStyles sets the default styles for each column in the row except
 // the column headers.
-func (t *Table) SetColumnStyles(styles ...*Style) error {
-	if len(styles) > len(t.columns) {
-		return fmt.Errorf("received %v column styles but table only has %v columns", len(styles), len(t.columns))
-	}
+func (t *Table) ColumnStyles(styles ...*Style) *Table {
 	for i, sty := range styles {
+		if i >= len(t.columns) {
+			return t
+		}
 		t.columns[i].style = sty
 	}
-	return nil
+	return t
 }
 
-// SetTitle sets the title for the table.  The default style is bold, but can
-// be changed using SetTitleStyle.
-func (t *Table) SetTitle(s string) {
-	t.title = Title{value: s, width: len(s), style: Styled(Bold)}
+// Title sets the title for the table.  The default style is bold, but can
+// be changed by passing your own styles
+func (t *Table) Title(s string, styles ...Styler) *Table {
+	var sty *Style
+	switch {
+	case len(styles) > 0:
+		sty = Styled(styles...)
+	default:
+		sty = Styled(Bold)
+	}
+	t.title = Title{value: s, width: len(s), style: sty}
+	return t
 }
 
-// SetTitleStyle sets the font style for the title.  The default is chalk.Bold
-// but can be set to any valid value of chalk.TextStyle
-func (t *Table) SetTitleStyle(sty *Style) {
-	t.title.style = sty
-}
-
-// SetColumnHeaders sets the column headers with an array of strings
+// ColumnHeaders sets the column headers with an array of strings
 // The default style is Underline and Bold.  This can be changed through
 // a call to SetColumnHeaderStyles.
-func (t *Table) SetColumnHeaders(headers ...string) error {
-	if len(headers) > len(t.columns) {
-		return fmt.Errorf("more column headers than columns")
-	}
+func (t *Table) ColumnHeaders(headers ...string) *Table {
 	for i, header := range headers {
+		if i >= len(t.columns) {
+			return t
+		}
 		t.headers[i].value = header
 		t.headers[i].style = Styled(Bold, Underline)
 		t.headers[i].width = len(header)
 	}
-	return nil
+	return t
 }
 
-// SetColumnHeaderStyles sets the column header styles. Returns an error
-// if there are more styles than the number of columns.
-func (t *Table) SetColumnHeaderStyles(styles ...*Style) error {
-	if len(styles) > len(t.columns) {
-		return fmt.Errorf("more styles than number of columns")
-	}
+// ColumnHeaderStyles sets the column header styles.
+func (t *Table) ColumnHeaderStyles(styles ...*Style) *Table {
 	for i, style := range styles {
+		if i > len(t.columns) {
+			return t
+		}
 		t.headers[i].style = style
 	}
-	return nil
+	return t
 }
 
 // NewTable creates a new table with a given number of columns, setting the default
 // justfication to left, and attempting to detect the existing terminal size to
-// set size defaults.  You can change these defaults using SetJustification and
-// MaxWidth and MaxHeight properties.
-func NewTable(numColumns int) *Table {
+// set size defaults.
+func NewTable(numColumns int, options ...TableOption) *Table {
 	w, h, err := getTerminalSize()
 	if err != nil || w == 0 || h == 0 {
 		w = 80
@@ -189,22 +214,25 @@ func NewTable(numColumns int) *Table {
 		defaultColumns[i].wrap = false
 	}
 
-	return &Table{
+	t := &Table{
 		columns:   defaultColumns,
-		MaxWidth:  w,
-		MaxHeight: h,
+		maxWidth:  w,
+		maxHeight: h,
 		headers:   emptyHeaders,
 		pad:       1,
 		title:     Title{value: "", width: 0, style: Styled(Default)},
 		writer:    os.Stdout,
 	}
-
+	for _, opt := range options {
+		opt(t)
+	}
+	return t
 }
 
 // Show will render the table using the headers, title, and styles previously
 // set.
 func (t *Table) Show() {
-	tableAsString := t.renderTableAsString()
+	tableAsString := t.AsString()
 	fmt.Fprintf(t.writer, tableAsString)
 
 }
@@ -214,8 +242,8 @@ func (t *Table) SetWriter(w io.Writer) {
 	t.writer = w
 }
 
-// returns the rendered table as a string
-func (t *Table) renderTableAsString() string {
+// AsString returns the rendered table as a string instead of immediately writing to the configured writer
+func (t *Table) AsString() string {
 	err := t.computeColWidths()
 	if err != nil {
 		// this error should never happen with fallback overflow strategy
@@ -410,13 +438,13 @@ func (t *Table) computeColWidths() error {
 }
 
 // simpleStrategy sets all column widths to their natural width.
-// Successful if the whole table fits inside MaxWidth (including pad)
+// Successful if the whole table fits inside maxWidth (including pad)
 func simpleStrategy(t *Table) bool {
 	natWidths := extractNatWidth(t)
 	colWPadded := mapAdd(natWidths, 2*t.pad)
 	totalWidth := sum(colWPadded)
 
-	if totalWidth <= t.MaxWidth {
+	if totalWidth <= t.maxWidth {
 		for i := range t.columns {
 			t.columns[i].computedWidth = natWidths[i]
 		}
@@ -430,7 +458,7 @@ func simpleStrategy(t *Table) bool {
 func wrapWidestStrategy(t *Table) bool {
 	naturalWidths := extractNatWidth(t)
 	maxI, maxW := max(naturalWidths)
-	tableMaxW := t.MaxWidth - 2*len(t.columns)*t.pad
+	tableMaxW := t.maxWidth - 2*len(t.columns)*t.pad
 	wrapW := tableMaxW - sumWithoutIndex(naturalWidths, maxI)
 	if wrappedWidthOk(wrapW, maxW) {
 		for i := range t.columns {

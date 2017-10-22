@@ -32,8 +32,8 @@ func SimpleTable() {
 	t := clt.NewTable(3)
 
 	// Set the headers and title
-	t.SetColumnHeaders("Column1", "Column2", "Column3")
-	t.SetTitle("Simple Example Table")
+	t.ColumnHeaders("Column1", "Column2", "Column3")
+	t.Title("Simple Example Table")
 
 	// Add some rows
 	t.AddRow("Col1 Line1", "Col2 Line1", "Col3 Line1")
@@ -48,8 +48,8 @@ func WrappedTable() {
 	t := clt.NewTable(3)
 
 	// Set the headers and title
-	t.SetColumnHeaders("Column1", "Column2", "Column3")
-	t.SetTitle("Wrapped Example Table")
+	t.ColumnHeaders("Column1", "Column2", "Column3")
+	t.Title("Wrapped Example Table")
 
 	// Add some rows
 	t.AddRow("Col1 Line1", "Col2 Line1", "This is a pretty long description.")
@@ -69,8 +69,8 @@ func StyledTable() {
 	t := clt.NewTable(2)
 
 	// Set the headers and title
-	t.SetColumnHeaders("Status", "Reason")
-	t.SetTitle("Styled Example Table")
+	t.ColumnHeaders("Status", "Reason")
+	t.Title("Styled Example Table")
 
 	// Set styles for each column
 	t.SetColumnStyles(clt.Styled(clt.Green), clt.Styled(clt.Default))

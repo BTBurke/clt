@@ -152,7 +152,7 @@ func (i *InteractiveSession) AskFromTable(prompt string, choices map[string]stri
 		t.AddRow(key, choice)
 		allKeys = append(allKeys, key)
 	}
-	tAsString := t.renderTableAsString()
+	tAsString := t.AsString()
 
 	i.Prompt = fmt.Sprintf("%s\n%s\n\nChoice [%s]: ", prompt, tAsString, choices[def])
 	i.Default = def

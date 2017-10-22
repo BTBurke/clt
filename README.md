@@ -41,10 +41,10 @@ func main() {
 	t := clt.NewTable(5)
 
 	// Add a title
-	t.SetTitle("Hockey Standings")
+	t.Title("Hockey Standings")
 
 	// Set column headers
-	t.SetColumnHeaders("Team", "Points", "W", "L", "OT")
+	t.ColumnHeaders("Team", "Points", "W", "L", "OT")
 
 	// Add some rows
 	t.AddRow("Washington Capitals", "42", "18", "11", "6")

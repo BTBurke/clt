@@ -27,7 +27,7 @@ func TestCreateTable(t *testing.T) {
 			t.Errorf("Table default justification should be %v, got %v.", jLeft, col.justify)
 		}
 	}
-	if table.MaxHeight == 0 || table.MaxWidth == 0 {
+	if table.maxHeight == 0 || table.maxWidth == 0 {
 		t.Error("Table should have a width/height.")
 	}
 
@@ -73,7 +73,7 @@ func TestCellLength(t *testing.T) {
 func TestTitle(t *testing.T) {
 	want := "This is the title"
 	table := NewTable(1)
-	table.SetTitle(want)
+	table.Title(want)
 	if table.title.value != want {
 		t.Errorf("Title should be %s, got %s", want, table.title.value)
 	}
@@ -87,7 +87,7 @@ func TestTitle(t *testing.T) {
 
 func TestSetColumnHeaders(t *testing.T) {
 	table := NewTable(2)
-	table.SetColumnHeaders("Header1", "Header2")
+	table.ColumnHeaders("Header1", "Header2")
 	want := []Cell{Cell{
 		value: "Header1",
 		style: Styled(Bold, Underline),
@@ -143,20 +143,20 @@ func s(n int) string {
 
 func TestSimpleStrategy(t *testing.T) {
 	table := NewTable(3)
-	table.MaxWidth = 80
-	table.SetColumnHeaders(s(4), s(4), s(4))
+	table.maxWidth = 80
+	table.ColumnHeaders(s(4), s(4), s(4))
 	table.AddRow(s(10), s(12), s(14))
 	table.pad = 2
 	table.computeColWidths()
-	c.Convey("NaturalColWidths < MaxWidth", t, func() {
+	c.Convey("NaturalColWidths < maxWidth", t, func() {
 		c.So(extractNatWidth(table), c.ShouldResemble, []int{10, 12, 14})
 		c.So(extractComputedWidth(table), c.ShouldResemble, []int{10, 12, 14})
 	})
 
 	// headers bigger than content
-	table.SetColumnHeaders(s(15), s(16), s(17))
+	table.ColumnHeaders(s(15), s(16), s(17))
 	table.computeColWidths()
-	c.Convey("Big headers, NaturalWidth < MaxWidth", t, func() {
+	c.Convey("Big headers, NaturalWidth < maxWidth", t, func() {
 		c.So(extractNatWidth(table), c.ShouldResemble, []int{15, 16, 17})
 		c.So(extractComputedWidth(table), c.ShouldResemble, []int{15, 16, 17})
 	})
@@ -164,7 +164,7 @@ func TestSimpleStrategy(t *testing.T) {
 
 func TestWrapWidest(t *testing.T) {
 	table := NewTable(3)
-	table.MaxWidth = 60
+	table.maxWidth = 60
 	table.AddRow(s(10), s(20), s(40))
 
 	c.Convey("Last column wrap, no padding", t, func() {
@@ -178,7 +178,7 @@ func TestWrapWidest(t *testing.T) {
 
 func TestOverflow(t *testing.T) {
 	table := NewTable(3)
-	table.MaxWidth = 10
+	table.maxWidth = 10
 	table.AddRow(s(10), s(20), s(40))
 
 	c.Convey("Overflow to natural width as last resort", t, func() {
@@ -236,8 +236,8 @@ func TestRenderTitle(t *testing.T) {
 	table := NewTable(2)
 	table.AddRow(s(10), s(10))
 	table.pad = 0
-	table.MaxWidth = 30
-	table.SetTitle("Test Title")
+	table.maxWidth = 30
+	table.Title("Test Title")
 	table.computeColWidths()
 	want := fmt.Sprintf("     %s     ", Styled(Bold).ApplyTo("Test Title"))
 	c.Convey("Title should be bold and centered", t, func() {
@@ -249,7 +249,7 @@ func TestRenderCell(t *testing.T) {
 	table := NewTable(1)
 	table.AddRow(s(10))
 	table.AddRow(s(14))
-	table.MaxWidth = 30
+	table.maxWidth = 30
 	table.pad = 2
 	table.computeColWidths()
 	c.Convey("Cell should be rendered with correct justification", t, func() {
@@ -272,7 +272,7 @@ func TestRenderRow(t *testing.T) {
 	table.AddRow(s(10), s(10))
 	table.AddRow(s(10), s(20))
 	table.pad = 2
-	table.MaxWidth = 28
+	table.maxWidth = 28
 	table.computeColWidths()
 	c10 := Styled(Default).ApplyTo(s(10))
 	cEmpty := Styled(Default).ApplyTo("")
@@ -295,8 +295,8 @@ func TestRenderTable(t *testing.T) {
 	table.AddRow(s(10), s(10))
 	table.AddRow(s(10), s(20))
 	table.pad = 2
-	table.MaxWidth = 28
-	table.SetTitle("Test Table")
+	table.maxWidth = 28
+	table.Title("Test Table")
 	c10 := Styled(Default).ApplyTo(s(10))
 	cEmpty := Styled(Default).ApplyTo("")
 	cTitle := Styled(Bold).ApplyTo("Test Table")
@@ -305,7 +305,7 @@ func TestRenderTable(t *testing.T) {
 		want1 := fmt.Sprintf("  %s    %s  \n", c10, c10)
 		want2 := fmt.Sprintf("  %s    %s  \n  %s              %s  \n", c10, c10, cEmpty, c10)
 		want := want0 + want1 + want2
-		renderedTable := table.renderTableAsString()
+		renderedTable := table.AsString()
 		c.So(renderedTable, c.ShouldResemble, want)
 	})
 }
