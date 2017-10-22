@@ -37,10 +37,14 @@ type Title struct {
 	style *Style
 }
 
+// Row is a row of cells in a table.  You want to use AddRow or AddStyledRow to create one.
 type Row struct {
 	cells []Cell
 }
 
+// Col is a column of a table.  Use ColumnHeaders, ColumnStyles, etc. to adjust default
+// styling and header properties.  You can always override a particular cell in a column
+// by passing in a different Cell style when you AddStyledRow.
 type Col struct {
 	index         int
 	naturalWidth  int
@@ -68,6 +72,8 @@ type Table struct {
 // TableOption is a function that sets an option on a table
 type TableOption func(t *Table) error
 
+// MaxHeight sets the table maximum height that can be used for pagination of
+// long tables
 func MaxHeight(h int) TableOption {
 	return func(t *Table) error {
 		t.maxHeight = h
@@ -75,6 +81,10 @@ func MaxHeight(h int) TableOption {
 	}
 }
 
+// MaxWidth sets the max width of the table.  The actual max width will be set to the
+// smaller of this number of the detected width of the terminal.  Very small max widths can
+// be a problem because the layout engine will not be able to find a strategy to render the
+// table.
 func MaxWidth(w int) TableOption {
 	return func(t *Table) error {
 		if t.maxWidth > w {
