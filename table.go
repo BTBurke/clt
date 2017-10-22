@@ -74,7 +74,9 @@ type Table struct {
 type TableOption func(t *Table) error
 
 // MaxHeight sets the table maximum height that can be used for pagination of
-// long tables
+// long tables.  Use this only when you want to reduce the maximum height of the table
+// to something less than the detected height of the terminal.  Normally you don't need to use
+// this and should prefer the auto detection.
 func MaxHeight(h int) TableOption {
 	return func(t *Table) error {
 		t.maxHeight = h
@@ -275,6 +277,30 @@ func (t *Table) Show() {
 	tableAsString := t.AsString()
 	fmt.Fprintf(t.writer, tableAsString)
 
+}
+
+// ShowPage will render the table but pauses every n rows to paginate the output.
+// If n=0, it will use the detected terminal height to make sure that the number of rows
+// shown will fit in a single page.
+func (t *Table) ShowPage(n int) {
+	if n == 0 {
+		n = t.maxHeight - 3
+	}
+	tableAsString := t.AsString()
+	lines := strings.SplitAfter(tableAsString, "\n")
+	sess := NewInteractiveSession()
+
+	start := 1
+	for i := range lines {
+		switch {
+		case i > 0 && i%n == 0:
+			fmt.Fprintf(t.writer, lines[i])
+			sess.PauseWithPrompt("\nResults %d-%d of %d. Press [Enter] to continue.\n", start, i+1, len(lines))
+			start = i + 2
+		default:
+			fmt.Fprintf(t.writer, lines[i])
+		}
+	}
 }
 
 // SetWriter sets the output writer if not writing to Stdout

@@ -279,13 +279,13 @@ func TestRenderRow(t *testing.T) {
 	c.Convey("Non-wrapped row rendered normally", t, func() {
 
 		want := fmt.Sprintf("  %s    %s  \n", c10, c10)
-		renderedRow := renderRow(table.rows[0].cells, table.columns, table.pad)
+		renderedRow := renderRow(table.rows[0].cells, table.columns, table.pad, table.spacing)
 		c.So(renderedRow, c.ShouldResemble, want)
 	})
 	c.Convey("Wrapped row rendered as multiple lines", t, func() {
 
 		want := fmt.Sprintf("  %s    %s  \n  %s              %s  \n", c10, c10, cEmpty, c10)
-		renderedRow := renderRow(table.rows[1].cells, table.columns, table.pad)
+		renderedRow := renderRow(table.rows[1].cells, table.columns, table.pad, table.spacing)
 		c.So(renderedRow, c.ShouldResemble, want)
 	})
 }

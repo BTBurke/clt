@@ -32,7 +32,8 @@ func NewInteractiveSession() *InteractiveSession {
 	}
 }
 
-// Say
+// Say is a short form of fmt.Fprintf but allows you to chain additional terminators to
+// the interactive session to collect user input
 func (i *InteractiveSession) Say(format string, args ...interface{}) *InteractiveSession {
 	fmt.Fprintf(i.output, format, args...)
 	return i
@@ -43,6 +44,14 @@ func (i *InteractiveSession) Say(format string, args ...interface{}) *Interactiv
 // It is useful for long-form content or paging.
 func (i *InteractiveSession) Pause() {
 	i.Prompt = "\n\nPress [Enter] to continue.\n\n"
+	i.get()
+}
+
+// PauseWithPrompt is a terminator that will render long-form text added via the another method
+// that returns *InteractiveSession and will wait for the user to press enter to continue.
+// This will use the custom prompt specified by format and args.
+func (i *InteractiveSession) PauseWithPrompt(format string, args ...interface{}) {
+	i.Prompt = fmt.Sprintf(format, args...)
 	i.get()
 }
 
