@@ -1,3 +1,5 @@
+[![](https://godoc.org/github.com/BTBurke/clt?status.svg)](http://godoc.org/github.com/BTBurke/clt)
+
 CLT - Command Line Tools for Go
 ===
 CLT is a toolset for building elegant command line interfaces in Go.  CLT includes elements like styled text, tables, selections from a list, and more so that you can quickly build CLIs with interactive elements without the hassle of dealing with formatting all these yourself.
