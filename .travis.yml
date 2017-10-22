@@ -1,5 +1,5 @@
 language: go
 go:
   - 1.9.1
-install:
+install: echo "Skip install, dep vendored dependencies..."
 script: go test -v .
