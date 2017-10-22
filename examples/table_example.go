@@ -45,20 +45,16 @@ func SimpleTable() {
 
 func WrappedTable() {
 	// A 3-column table
-	t := clt.NewTable(3)
-
-	// Set the headers and title
-	t.ColumnHeaders("Column1", "Column2", "Column3")
-	t.Title("Wrapped Example Table")
+	// Force the terminal size to be small to see wrapping behavior.
+	// Normally, the terminal width is detected automatically, but
+	// you can set the table MaxWidth explicitly when desired.
+	t := clt.NewTable(3, clt.MaxWidth(50), clt.Spacing(2)).
+		ColumnHeaders("Column1", "Column2", "Column3").
+		Title("Wrapped Example Table")
 
 	// Add some rows
 	t.AddRow("Col1 Line1", "Col2 Line1", "This is a pretty long description.")
 	t.AddRow("Col1 Line2", "Col2 Line2", "This is another longish one.")
-
-	// Force the terminal size to be small to see wrapping behavior.
-	// Normally, the terminal width is detected automatically, but
-	// you can set the table MaxWidth explicitly when desired.
-	t.MaxWidth = 50
 
 	// Print the table
 	t.Show()
@@ -73,7 +69,7 @@ func StyledTable() {
 	t.Title("Styled Example Table")
 
 	// Set styles for each column
-	t.SetColumnStyles(clt.Styled(clt.Green), clt.Styled(clt.Default))
+	t.ColumnStyles(clt.Styled(clt.Green), clt.Styled(clt.Default))
 
 	// Add some rows.  The OK will be green.
 	t.AddRow("OK", "Everything worked")

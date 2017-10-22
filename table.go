@@ -65,6 +65,7 @@ type Table struct {
 	pad       int
 	maxWidth  int
 	maxHeight int
+	spacing   int
 
 	writer io.Writer
 }
@@ -89,6 +90,20 @@ func MaxWidth(w int) TableOption {
 	return func(t *Table) error {
 		if t.maxWidth > w {
 			t.maxWidth = w
+		}
+		return nil
+	}
+}
+
+// Spacing adjusts the spacing of the table.  For n=2, there will be one whitespace line
+// between each row
+func Spacing(n int) TableOption {
+	return func(t *Table) error {
+		switch {
+		case n > 1:
+			t.spacing = n
+		default:
+			t.spacing = 1
 		}
 		return nil
 	}
@@ -278,7 +293,7 @@ func (t *Table) AsString() string {
 	renderedT.WriteString(renderTitle(t) + "\n\n")
 	renderedT.WriteString(renderHeaders(t.headers, t.columns, t.pad))
 	for _, row := range t.rows {
-		renderedT.WriteString(renderRow(row.cells, t.columns, t.pad))
+		renderedT.WriteString(renderRow(row.cells, t.columns, t.pad, t.spacing))
 	}
 	return renderedT.String()
 }
@@ -320,7 +335,7 @@ func renderHeaders(cells []Cell, cols []Col, pad int) string {
 
 // renderRow renders the row as a styled string and implements the
 // wrapping of long strings where necessary
-func renderRow(cells []Cell, cols []Col, pad int) string {
+func renderRow(cells []Cell, cols []Col, pad int, spacing int) string {
 	wrappedLinesCount := make([]int, len(cells))
 
 	for i, cell1 := range cells {
@@ -354,6 +369,9 @@ func renderRow(cells []Cell, cols []Col, pad int) string {
 	for _, line := range lines {
 		out.Write(line.Bytes())
 		out.WriteString("\n")
+	}
+	if spacing > 1 {
+		out.WriteString(strings.Repeat("\n", spacing-1))
 	}
 	return out.String()
 }
