@@ -11,11 +11,14 @@ import (
 	"unsafe"
 )
 
+// Justification sets the default placement of text inside each cell of a column
+type Justification int
+
 // Column justification flags
 const (
-	jLeft int = iota
-	jCenter
-	jRight
+	Left Justification = iota
+	Center
+	Right
 )
 
 // Cell represents a cell in the table.  Most often you'll create a cell using StyledCell
@@ -44,7 +47,7 @@ type Col struct {
 	computedWidth int
 	wrap          bool
 	style         *Style
-	justify       int
+	justify       Justification
 }
 
 // Table is a table output to the console.  Use NewTable to construct the table with sensible defaults.
@@ -210,7 +213,7 @@ func NewTable(numColumns int, options ...TableOption) *Table {
 	for i := 0; i < numColumns; i++ {
 		defaultColumns[i].index = i
 		defaultColumns[i].style = Styled(Default)
-		defaultColumns[i].justify = jLeft
+		defaultColumns[i].justify = Left
 		defaultColumns[i].wrap = false
 	}
 
@@ -334,13 +337,13 @@ func renderRow(cells []Cell, cols []Col, pad int) string {
 }
 
 // renderCell renders the cell as a string using the correct justification
-func renderCell(s string, width int, pad int, sty *Style, justify int) string {
+func renderCell(s string, width int, pad int, sty *Style, justify Justification) string {
 	switch justify {
-	case jLeft:
+	case Left:
 		return justLeft(s, width, pad, sty)
-	case jCenter:
+	case Center:
 		return justCenter(s, width, pad, sty)
-	case jRight:
+	case Right:
 		return justRight(s, width, pad, sty)
 	}
 	return ""

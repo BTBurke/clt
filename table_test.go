@@ -23,8 +23,8 @@ func TestCreateTable(t *testing.T) {
 		t.Errorf("Table should have %d columns, has %d.", 3, len(table.columns))
 	}
 	for _, col := range table.columns {
-		if !reflect.DeepEqual(col.justify, jLeft) {
-			t.Errorf("Table default justification should be %v, got %v.", jLeft, col.justify)
+		if !reflect.DeepEqual(col.justify, Left) {
+			t.Errorf("Table default justification should be %v, got %v.", Left, col.justify)
 		}
 	}
 	if table.maxHeight == 0 || table.maxWidth == 0 {
@@ -256,11 +256,11 @@ func TestRenderCell(t *testing.T) {
 		want := fmt.Sprintf("  %s      ", Styled(Default).ApplyTo(s(10)))
 		st := renderCell(table.rows[0].cells[0].value, table.columns[0].computedWidth, table.pad, table.columns[0].style, table.columns[0].justify)
 		c.So(st, c.ShouldResemble, want)
-		table.columns[0].justify = jCenter
+		table.columns[0].justify = Center
 		want = fmt.Sprintf("    %s    ", Styled(Default).ApplyTo(s(10)))
 		st = renderCell(table.rows[0].cells[0].value, table.columns[0].computedWidth, table.pad, table.columns[0].style, table.columns[0].justify)
 		c.So(st, c.ShouldResemble, want)
-		table.columns[0].justify = jRight
+		table.columns[0].justify = Right
 		want = fmt.Sprintf("      %s  ", Styled(Default).ApplyTo(s(10)))
 		st = renderCell(table.rows[0].cells[0].value, table.columns[0].computedWidth, table.pad, table.columns[0].style, table.columns[0].justify)
 		c.So(st, c.ShouldResemble, want)
