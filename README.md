@@ -81,7 +81,7 @@ Progress bars use go routines to update the progress status while your app does 
 
 ## Interactive Sessions
 
-CLT provides building blocks to create interactive sessions, letting you prompt a user to select from a set of options, answer questions, or enter a username/password.
+CLT provides building blocks to create interactive sessions, giving you flexible functions to ask the user for input.
 
 See [examples/interactive_example.go](https://github.com/BTBurke/clt/blob/master/examples/interactive_example.go) for examples of creating interactive interfaces.
 
