@@ -123,17 +123,20 @@ func (i *InteractiveSession) Error(format string, args ...interface{}) {
 	os.Exit(1)
 }
 
-// Ask is a terminator for an interactive session that results in returning the user
+// Ask is a terminator for an interactive session that results in returning the user's
 // input.  Validators can optionally be applied to ensure that acceptable input is returned
 // or the question will be asked again.
 func (i *InteractiveSession) Ask(prompt string, validators ...ValidationFunc) string {
 	return i.ask(prompt, "", "", validators...)
 }
 
+// AskWithDefault is like ask, but sets a default choice that the user can select by pressing enter.
 func (i *InteractiveSession) AskWithDefault(prompt string, defaultChoice string, validators ...ValidationFunc) string {
 	return i.ask(prompt, defaultChoice, "", validators...)
 }
 
+// AskWithHint is like ask, but gives a hint about the proper format of the response.  This is useful
+// combined with a validation function to get input in the right format.
 func (i *InteractiveSession) AskWithHint(prompt string, hint string, validators ...ValidationFunc) string {
 	return i.ask(prompt, "", hint, validators...)
 }
@@ -170,6 +173,9 @@ func (i *InteractiveSession) AskPassword(validators ...ValidationFunc) string {
 	return strings.TrimSpace(pw)
 }
 
+// AskYesNo asks the user a yes or no question with a default value.  Defaults of `y` or `yes` will
+// set the default to yes.  Anything else will default to no.  You can use IsYes or IsNo to act on the response
+// without worrying about what version of y, Y, YES, yes, etc. that the user entered.
 func (i *InteractiveSession) AskYesNo(prompt string, defaultChoice string) string {
 	switch def := strings.ToLower(defaultChoice); def {
 	case "y", "yes":
@@ -180,6 +186,8 @@ func (i *InteractiveSession) AskYesNo(prompt string, defaultChoice string) strin
 	return i.ask(prompt, i.Default, "", ValidateYesNo())
 }
 
+// AskFromTable creates a table to select choices from.  It has a built-in validation function that will
+// ensure that only the options listed are valid choices.
 func (i *InteractiveSession) AskFromTable(prompt string, choices map[string]string, def string) string {
 	t := NewTable(2).
 		ColumnHeaders("Option", "")
