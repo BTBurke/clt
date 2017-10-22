@@ -206,6 +206,18 @@ func (t *Table) ColumnHeaderStyles(styles ...*Style) *Table {
 	return t
 }
 
+// Justification sets the justification of each column.  If you pass more justifications
+// than the number of columns they will be silently dropped.
+func (t *Table) Justification(cellJustifications ...Justification) *Table {
+	for i, just := range cellJustifications {
+		if i > len(t.columns) {
+			return t
+		}
+		t.columns[i].justify = just
+	}
+	return t
+}
+
 // NewTable creates a new table with a given number of columns, setting the default
 // justfication to left, and attempting to detect the existing terminal size to
 // set size defaults.
