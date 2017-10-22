@@ -99,7 +99,7 @@ See [examples/interactive_example.go](https://github.com/BTBurke/clt/blob/master
 | PauseWithPrompt | Paginate some output with a custom prompt to continue |
 | Warn | Issue a warning that is visually separated from other text by style changes |
 | Error | Show an error message and exit the process |
-
+| Say | Thin wrapper around `fmt.Printf` that helps build UIs in a fluent style and take care of common spacing issues when building UIs. |
 
 
 
