@@ -86,7 +86,8 @@ See [examples/interactive_example.go](https://github.com/BTBurke/clt/blob/master
 
 #### Interactions
 
-|---------|-------------|
+| Interaction | Use |
+| ------- | ----------- |
 | Ask | Ask for a response with optional validation |
 | AskWithDefault | Ask with a preconfigured default value |
 | AskWithHint | Ask with a hint that shows how the input should be formatted |
