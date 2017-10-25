@@ -2,11 +2,23 @@ package main
 
 import (
 	"fmt"
-	"github.com/BTBurke/clt"
 	"time"
+
+	"github.com/BTBurke/clt"
 )
 
 func main() {
+
+	// This is a basic loading bar that disappears after loading in complete.
+	// Unlike progress bars, there is not indication of success or failure.
+	// This is useful when making short server calls.  The delay parameter
+	// prevents flashing the loading symbol.  If your call completes within
+	// this delay paramter, the loading status will never be shown.
+	fmt.Println("\nShowing a loading symbol while we make a remote call:")
+	pL := clt.NewLoadingMessage("Loading...", clt.Dots, 100*time.Millisecond)
+	pL.Start()
+	time.Sleep(4 * time.Second)
+	pL.Success()
 
 	// An example of a progress spinner that succeeds.  Calling Start()
 	// starts a new go routine to render the spinner and returns control
@@ -15,7 +27,7 @@ func main() {
 	fmt.Println("\nDoing something that succeeds after 3 seconds:")
 	p := clt.NewProgressSpinner("Testing a successful result")
 	p.Start()
-	time.Sleep(time.Duration(3) * time.Second)
+	time.Sleep(3 * time.Second)
 	p.Success()
 
 	// An example of a progress spinner that fails.  Calling Fail() will
@@ -23,7 +35,7 @@ func main() {
 	fmt.Println("\nDoing something that fails after 3 seconds:")
 	pF := clt.NewProgressSpinner("Testing a failed result")
 	pF.Start()
-	time.Sleep(time.Duration(3) * time.Second)
+	time.Sleep(3 * time.Second)
 	pF.Fail()
 
 	// An example of a progress bar that succeeds.  You must call

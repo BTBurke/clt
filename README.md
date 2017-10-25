@@ -67,11 +67,13 @@ See [examples/table_example.go](https://github.com/BTBurke/clt/blob/master/examp
 
 ## Progress Bars
 
-CLT provides two kinds of progress bars:
+CLT provides three kinds of progress indicators:
 
 * *Spinner* - Useful for when you want to show progress but don't know exactly when an action will complete
 
 * *Bar* - Useful when you have a defined number of iterations to completion and you can update progress during processing
+
+* *Loading* - Useful for when you are making a remote call and you want to give a visual indication that something is going on in the background, but you want it to disappear as soon as the call ends.  It also has a configurable delay so that the loading indicator will only appear when the call takes longer than the delay to complete.
 
 #### Example:  
 
