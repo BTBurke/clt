@@ -9,11 +9,11 @@ import (
 
 func main() {
 
-	// This is a basic loading bar that disappears after loading in complete.
-	// Unlike progress bars, there is not indication of success or failure.
+	// This is a basic loading indicator that disappears after loading is complete.
+	// Unlike progress bars, there is no indication of success or failure.
 	// This is useful when making short server calls.  The delay parameter
 	// prevents flashing the loading symbol.  If your call completes within
-	// this delay paramter, the loading status will never be shown.
+	// this delay parameter, the loading status will never be shown.
 	fmt.Println("\nShowing a loading symbol while we make a remote call:")
 	pL := clt.NewLoadingMessage("Loading...", clt.Dots, 100*time.Millisecond)
 	pL.Start()
