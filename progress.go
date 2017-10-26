@@ -24,17 +24,17 @@ const (
 type Spinner []string
 
 var (
-	// Spinning wheel created with pipes and slashes
+	// Wheel created with pipes and slashes
 	Wheel Spinner = []string{"|", "/", "-", "\\"}
 	// Bouncing dots
-	Bounce Spinner = []string{"⠁", "⠂", "⠄", "⠂"}
+	Bouncing Spinner = []string{"⠁", "⠂", "⠄", "⠂"}
 	// Clock that spins two hours per step
 	Clock Spinner = []string{"🕐 ", "🕑 ", "🕒 ", "🕓 ", "🕔 ", "🕕 ", "🕖 ", "🕗 ", "🕘 ", "🕙 ", "🕚 "}
 	// Dots that spin around a rectangle
 	Dots Spinner = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 )
 
-// Generic progress structure used to render progress and loading indicators
+// Progress structure used to render progress and loading indicators
 type Progress struct {
 	// Prompt to display before spinner or bar
 	Prompt string
@@ -106,8 +106,9 @@ func (p *Progress) Start() {
 		p.c = make(chan int)
 		go renderSpinner(p, p.c)
 	case bar:
-		p.cf = make(chan float64)
+		p.cf = make(chan float64, 2)
 		go renderBar(p, p.cf)
+		p.cf <- 0.0
 	case loading:
 		p.c = make(chan int)
 		go renderLoading(p, p.c)
@@ -120,10 +121,13 @@ func (p *Progress) Success() {
 	switch p.style {
 	case spinner:
 		p.c <- success
+		close(p.c)
 	case bar:
 		p.cf <- -1.0
+		close(p.cf)
 	case loading:
 		p.c <- success
+		close(p.c)
 	}
 	p.wg.Wait()
 }
@@ -134,11 +138,14 @@ func (p *Progress) Fail() {
 	switch p.style {
 	case spinner:
 		p.c <- fail
+		close(p.c)
 	case bar:
 		p.cf <- -2.0
+		close(p.cf)
 	// loading only has one termination state
 	case loading:
 		p.c <- success
+		close(p.c)
 	}
 	p.wg.Wait()
 }
@@ -209,30 +216,23 @@ func renderBar(p *Progress, c chan float64) {
 	if p.output == nil {
 		p.output = os.Stdout
 	}
-	var result float64
-	eqLen := 0
-	spLen := p.DisplayLength
 
-	for {
-		select {
-		case result = <-c:
-			eqLen = int(result * float64(p.DisplayLength))
-			spLen = p.DisplayLength - eqLen
-			switch {
-			case result == -1.0:
-				fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("=", p.DisplayLength), Styled(Green).ApplyTo("100%"))
-				fmt.Fprintf(p.output, "\x1b[?25h\n")
-				return
-			case result == -2.0:
-				fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("X", p.DisplayLength), Styled(Red).ApplyTo("FAIL"))
-				fmt.Fprintf(p.output, "\x1b[?25h\n")
-				return
-			case result >= 0.0:
-				fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s%s] %2.0f%%", p.Prompt, strings.Repeat("=", eqLen), strings.Repeat(" ", spLen), 100.0*result)
-			}
-		default:
+	for result := range c {
+		eqLen := int(result * float64(p.DisplayLength))
+		spLen := p.DisplayLength - eqLen
+		switch {
+		case result == -1.0:
+			fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("=", p.DisplayLength), Styled(Green).ApplyTo("100%"))
+			fmt.Fprintf(p.output, "\x1b[?25h\n")
+			return
+		case result == -2.0:
+			fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("X", p.DisplayLength), Styled(Red).ApplyTo("FAIL"))
+			fmt.Fprintf(p.output, "\x1b[?25h\n")
+			return
+		case result >= 0.0:
 			fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s%s] %2.0f%%", p.Prompt, strings.Repeat("=", eqLen), strings.Repeat(" ", spLen), 100.0*result)
 		}
+
 	}
 }
 
