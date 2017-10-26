@@ -158,19 +158,20 @@ func (i *InteractiveSession) ask(prompt string, def string, hint string, validat
 // AskPassword is a terminator that asks for a password and does not echo input
 // to the terminal.
 func (i *InteractiveSession) AskPassword(validators ...ValidationFunc) string {
-	rw := bufio.NewReadWriter(i.input, bufio.NewWriter(i.output))
-	term := terminal.NewTerminal(rw, "")
-	pw, err := term.ReadPassword("Password: ")
+	fmt.Fprintf(i.output, "Password: ")
+	pw, err := terminal.ReadPassword(0)
 	if err != nil {
-		i.Error("\n%s\n\n", err)
+		i.Error("\n%s\n", err)
 	}
+
+	pwS := strings.TrimSpace(string(pw))
 	for _, validator := range validators {
-		if ok, err := validator(strings.TrimSpace(pw)); !ok {
+		if ok, err := validator(pwS); !ok {
 			i.Say("\nError: %s\n\n", err)
 			i.AskPassword(validators...)
 		}
 	}
-	return strings.TrimSpace(pw)
+	return pwS
 }
 
 // AskYesNo asks the user a yes or no question with a default value.  Defaults of `y` or `yes` will

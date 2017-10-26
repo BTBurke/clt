@@ -10,11 +10,14 @@ func main() {
 	fmt.Println("------- Pagination Example --------")
 	Pagination()
 
-	fmt.Println("\n------- Yes/No Example --------")
+	fmt.Println("\n\n\n\n\n------- Yes/No Example --------")
 	AskYesNo()
 
-	fmt.Println("\n------- Choice Example --------")
+	fmt.Println("\n\n\n\n\n------- Choice Example --------")
 	ChooseFromOptions()
+
+	fmt.Println("\n\n\n\n\n------- Password Example -------")
+	PasswordPrompt()
 }
 
 func Pagination() {
@@ -50,5 +53,7 @@ func ChooseFromOptions() {
 }
 
 func PasswordPrompt() {
-
+	i := clt.NewInteractiveSession()
+	pw := i.AskPassword()
+	i.Say("Shhh! Don't tell anyone your password is %s", pw)
 }
