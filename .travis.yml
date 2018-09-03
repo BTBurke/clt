@@ -1,5 +1,6 @@
 language: go
 go:
   - 1.11
-install: go get
-script: go test -v .
+script: 
+  - env GOMODULE111=on go get
+  - env GOMODULE111=on go test -v .
