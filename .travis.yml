@@ -1,5 +1,5 @@
 language: go
 go:
   - 1.11
-install: echo "Skip install, go mod dependencies"
+install: go get
 script: go test -v .
