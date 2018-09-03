@@ -1,6 +1,0 @@
-language: go
-go:
-  - 1.11
-script: 
-  - env GOMODULE111=on go get
-  - env GOMODULE111=on go test -v .
