@@ -8,7 +8,7 @@ import (
 	"github.com/BTBurke/snapshot"
 )
 
-func WithInput(input string) (*InteractiveSession, *bytes.Buffer) {
+func WithTestInput(input string) (*InteractiveSession, *bytes.Buffer) {
 	var out bytes.Buffer
 	return &InteractiveSession{
 		input:  bufio.NewReader(bytes.NewBufferString(input)),
@@ -35,7 +35,7 @@ func TestSay(t *testing.T) {
 	}
 	for _, tc := range tt {
 		t.Run(tc.Name, func(t *testing.T) {
-			sess, buf := WithInput(tc.Input)
+			sess, buf := WithTestInput(tc.Input)
 
 			var got string
 			switch tc.Method {

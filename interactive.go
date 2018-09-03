@@ -30,11 +30,33 @@ type InteractiveSession struct {
 }
 
 // NewInteractiveSession returns a new InteractiveSession outputting to Stdout
-// and reading from Stdin
-func NewInteractiveSession() *InteractiveSession {
-	return &InteractiveSession{
+// and reading from Stdin by default, but other inputs and outputs may be specified
+// with SessionOptions
+func NewInteractiveSession(opts ...SessionOption) *InteractiveSession {
+	i := &InteractiveSession{
 		input:  bufio.NewReader(os.Stdin),
 		output: os.Stdout,
+	}
+	for _, opt := range opts {
+		opt(i)
+	}
+	return i
+}
+
+// SessionOption optionally configures aspects of the interactive session
+type SessionOption func(i *InteractiveSession)
+
+// WithInput uses an input other than os.Stdin
+func WithInput(r io.Reader) SessionOption {
+	return func(i *InteractiveSession) {
+		i.input = bufio.NewReader(r)
+	}
+}
+
+// WithOutput uses an output other than os.Stdout
+func WithOutput(w io.Writer) SessionOption {
+	return func(i *InteractiveSession) {
+		i.output = w
 	}
 }
 
@@ -158,6 +180,15 @@ func (i *InteractiveSession) ask(prompt string, def string, hint string, validat
 // AskPassword is a terminator that asks for a password and does not echo input
 // to the terminal.
 func (i *InteractiveSession) AskPassword(validators ...ValidationFunc) string {
+	return askPassword(i, "Password: ", validators...)
+}
+
+// AskPasswordPrompt is a terminator that asks for a password with a custom prompt
+func (i *InteractiveSession) AskPasswordPrompt(prompt string, validators ...ValidationFunc) string {
+	return askPassword(i, prompt, validators...)
+}
+
+func askPassword(i *InteractiveSession, prompt string, validators ...ValidationFunc) string {
 	fmt.Fprintf(i.output, "Password: ")
 	pw, err := terminal.ReadPassword(0)
 	if err != nil {
