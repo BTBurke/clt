@@ -60,6 +60,15 @@ func WithOutput(w io.Writer) SessionOption {
 	}
 }
 
+// Reset allows reuse of the same interactive session by reseting its state and keeping
+// its current input and output
+func (i *InteractiveSession) Reset() {
+	i.Prompt = ""
+	i.Default = ""
+	i.ValHint = ""
+	i.response = ""
+}
+
 // Say is a short form of fmt.Fprintf but allows you to chain additional terminators to
 // the interactive session to collect user input
 func (i *InteractiveSession) Say(format string, args ...interface{}) *InteractiveSession {
