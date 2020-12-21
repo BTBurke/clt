@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"sort"
 
 	"os"
 	"strings"
@@ -233,9 +234,13 @@ func (i *InteractiveSession) AskFromTable(prompt string, choices map[string]stri
 	t := NewTable(2).
 		ColumnHeaders("Option", "")
 	var allKeys []string
-	for key, choice := range choices {
-		t.AddRow(key, choice)
+	for key := range choices {
 		allKeys = append(allKeys, key)
+	}
+	sort.Strings(allKeys)
+
+	for _, key := range allKeys {
+		t.AddRow(key, choices[key])
 	}
 	tAsString := t.AsString()
 
