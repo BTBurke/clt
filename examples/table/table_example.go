@@ -24,7 +24,7 @@ func main() {
 	fmt.Printf("\n\n\n%s Styled Table Example %s\n\n\n", sepLine, sepLine)
 	StyledTable()
 
-	fmt.Println("\n\n")
+	fmt.Printf("\n\n")
 }
 
 func SimpleTable() {
