@@ -43,13 +43,16 @@ type Progress struct {
 	// at the end (e.g, the spinner, FAIL, OK, or XX%)
 	DisplayLength int
 
-	style     int
-	cf        chan float64
-	c         chan int
-	spinsteps Spinner
-	delay     time.Duration
-	output    io.Writer
-	wg        sync.WaitGroup
+	style       int
+	cf          chan float64
+	c           chan int
+	steps       int
+	currentStep int
+	spinsteps   Spinner
+	delay       time.Duration
+	output      io.Writer
+	wg          sync.WaitGroup
+	mu          sync.Mutex
 }
 
 // NewProgressSpinner returns a new spinner with prompt <message>
@@ -72,6 +75,20 @@ func NewProgressBar(format string, args ...interface{}) *Progress {
 		Prompt:        fmt.Sprintf(format, args...),
 		DisplayLength: 20,
 		output:        os.Stdout,
+	}
+}
+
+// NewIncrementalProgressBar returns a new progress bar with a fixed number of steps.  This
+// can be useful when you want independent go routines to update total progress as they finish work
+// without knowing the total state of the system.  You can call `defer mybar.Increment()` in your go
+// routine to update the value of the bar by one increment.
+func NewIncrementalProgressBar(steps int, format string, args ...interface{}) *Progress {
+	return &Progress{
+		style:         bar,
+		Prompt:        fmt.Sprintf(format, args...),
+		DisplayLength: 20,
+		output:        os.Stdout,
+		steps:         steps,
 	}
 }
 
@@ -239,6 +256,22 @@ func renderBar(p *Progress, c chan float64) {
 // Update the progress bar using a number [0, 1.0] to represent
 // the percentage complete
 func (p *Progress) Update(pct float64) {
+	if pct >= 1.0 {
+		pct = 1.0
+	}
+	p.cf <- pct
+}
+
+// Increment updates a stepped progress bar
+func (p *Progress) Increment() {
+	if p.steps == 0 {
+		return
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.currentStep += 1
+	pct := float64(p.currentStep) / float64(p.steps)
 	if pct >= 1.0 {
 		pct = 1.0
 	}

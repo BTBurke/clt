@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/BTBurke/clt"
@@ -62,5 +64,44 @@ func main() {
 		time.Sleep(time.Duration(50) * time.Millisecond)
 	}
 	pB2.Fail()
+
+	// An example of an incremental progress bar.  See incremental_example.go.
+	fmt.Println("\nDoing incremental progress from multiple go routimes:")
+	incremental()
+
+}
+
+func incremental() {
+	// This is an incremental progress example.  It starts a progress bar with 10 total steps then some go routines
+	// to simulate doing work and then updates the progress as each finishes
+
+	p := clt.NewIncrementalProgressBar(10, "Doing work")
+
+	ch := make(chan int, 1)
+	var wg sync.WaitGroup
+
+	// start 3 go routines to do some work.  Pass them a copy of the progress bar so they can
+	// call increment after each task is done
+	for i := 0; i < 3; i++ {
+		wg.Add(1)
+		go func(ch chan int, p *clt.Progress) {
+			defer wg.Done()
+			for range ch {
+				time.Sleep(time.Duration(rand.Intn(1000) * 1000000))
+				p.Increment()
+			}
+		}(ch, p)
+	}
+
+	// start the bar then pass it some work to do
+	p.Start()
+	for i := 0; i < 10; i++ {
+		ch <- i
+	}
+	// wait until all the work is done
+	wg.Done()
+
+	// call Success to close the progress channel and update to 100%
+	p.Success()
 
 }
