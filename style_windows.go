@@ -100,8 +100,7 @@ func Styled(s ...Styler) *Style {
 		beforeConcat.WriteString("")
 		afterConcat.WriteString("")
 
-		var bef, aft int
-		for idx, sty := range s {
+		for idx := range s {
 			if idx < len(s)-1 {
 				beforeConcat.WriteString("")
 				afterConcat.WriteString("")
