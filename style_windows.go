@@ -4,7 +4,6 @@ package clt
 
 import (
 	"bytes"
-	"fmt"
 )
 
 // Color represents a ANSI-coded color style for text
@@ -92,8 +91,8 @@ func Styled(s ...Styler) *Style {
 	case len(s) == 1:
 		bef, aft := s[0].Codes()
 		var computedStyle Style
-		computedStyle.before = fmt.Sprintf("", bef)
-		computedStyle.after = fmt.Sprintf("", aft)
+		computedStyle.before = ""
+		computedStyle.after = ""
 		return &computedStyle
 	case len(s) > 1:
 		var computedStyle Style
@@ -106,11 +105,11 @@ func Styled(s ...Styler) *Style {
 		for idx, sty := range s {
 			bef, aft = sty.Codes()
 			if idx < len(s)-1 {
-				beforeConcat.WriteString(fmt.Sprintf("", bef))
-				afterConcat.WriteString(fmt.Sprintf("", aft))
+				beforeConcat.WriteString("")
+				afterConcat.WriteString("")
 			} else {
-				beforeConcat.WriteString(fmt.Sprintf("", bef))
-				afterConcat.WriteString(fmt.Sprintf("", aft))
+				beforeConcat.WriteString("")
+				afterConcat.WriteString("")
 			}
 		}
 		computedStyle.before = beforeConcat.String()
