@@ -28,7 +28,7 @@ func setInputConsoleMode(h syscall.Handle, m uint32) error {
 func enableANSI() {
 	log.Printf("enabled ANSI handling")
 	h := syscall.Handle(os.Stdin.Fd())
-	if err := setInputConsoleMode(h, 0); err != nil {
+	if err := setInputConsoleMode(h, 0x0004); err != nil {
 		log.Printf("error setting ANSI handling: %s", err)
 	}
 }
