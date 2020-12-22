@@ -4,7 +4,6 @@ package clt
 
 import (
 	"log"
-	"os"
 	"syscall"
 )
 
@@ -26,7 +25,10 @@ func setInputConsoleMode(h syscall.Handle, m uint32) error {
 }
 
 func enableANSI() {
-	h := syscall.Handle(os.Stdout.Fd())
+	h, err := syscall.GetStdHandle(syscall.STD_OUTPUT_HANDLE)
+	if err != nil {
+		log.Printf("error getting stdout handle")
+	}
 	if err := setInputConsoleMode(h, 4); err != nil {
 		log.Printf("error setting ANSI handling: %s", err)
 	}
