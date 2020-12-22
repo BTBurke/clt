@@ -240,11 +240,11 @@ func renderBar(p *Progress, c chan float64) {
 		switch {
 		case result == -1.0:
 			fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("=", p.DisplayLength), Styled(Green).ApplyTo("100%"))
-			fmt.Fprintf(p.output, "\x1b[?25h\n")
+			fmt.Fprintf(p.output, "\r\n")
 			return
 		case result == -2.0:
 			fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("X", p.DisplayLength), Styled(Red).ApplyTo("FAIL"))
-			fmt.Fprintf(p.output, "\x1b[?25h\n")
+			fmt.Fprintf(p.output, "\r\n")
 			return
 		case result >= 0.0:
 			fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s%s] %2.0f%%", p.Prompt, strings.Repeat("=", eqLen), strings.Repeat(" ", spLen), 100.0*result)
