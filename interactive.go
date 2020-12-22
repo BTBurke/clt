@@ -126,7 +126,7 @@ func (i *InteractiveSession) get(opts ...getOpt) (err error) {
 	if err != nil {
 		return err
 	}
-	i.response = strings.TrimRight(i.response, " \n")
+	i.response = strings.TrimRight(i.response, " \n\r")
 	if len(i.Default) > 0 && len(i.response) == 0 {
 		switch i.Default {
 		case "y/N":
