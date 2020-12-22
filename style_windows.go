@@ -89,7 +89,6 @@ func Background(c Color) Color {
 func Styled(s ...Styler) *Style {
 	switch {
 	case len(s) == 1:
-		bef, aft := s[0].Codes()
 		var computedStyle Style
 		computedStyle.before = ""
 		computedStyle.after = ""
@@ -103,7 +102,6 @@ func Styled(s ...Styler) *Style {
 
 		var bef, aft int
 		for idx, sty := range s {
-			bef, aft = sty.Codes()
 			if idx < len(s)-1 {
 				beforeConcat.WriteString("")
 				afterConcat.WriteString("")
