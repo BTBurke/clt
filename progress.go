@@ -182,13 +182,13 @@ func renderSpinner(p *Progress, c chan int) {
 		case result := <-c:
 			switch result {
 			case success:
-				fmt.Fprintf(p.output, "\x1b[?25h\r%s%s[%s]\n", p.Prompt, strings.Repeat(".", dotLen), Styled(Green).ApplyTo("OK"))
+				fmt.Fprintf(p.output, "%s\r%s%s[%s]\n", showCursor, p.Prompt, strings.Repeat(".", dotLen), Styled(Green).ApplyTo("OK"))
 			case fail:
-				fmt.Fprintf(p.output, "\x1b[?25h\r%s%s[%s]\n", p.Prompt, strings.Repeat(".", dotLen), Styled(Red).ApplyTo("FAIL"))
+				fmt.Fprintf(p.output, "%s\r%s%s[%s]\n", showCursor, p.Prompt, strings.Repeat(".", dotLen), Styled(Red).ApplyTo("FAIL"))
 			}
 			return
 		default:
-			fmt.Fprintf(p.output, "\x1b[?25l\r%s%s[%s]", p.Prompt, strings.Repeat(".", dotLen), spinLookup(i, p.spinsteps))
+			fmt.Fprintf(p.output, "%s\r%s%s[%s]", hideCursor, p.Prompt, strings.Repeat(".", dotLen), spinLookup(i, p.spinsteps))
 			time.Sleep(time.Duration(250) * time.Millisecond)
 		}
 	}
@@ -215,10 +215,10 @@ func renderLoading(p *Progress, c chan int) {
 	for i := 0; ; i++ {
 		select {
 		case <-c:
-			fmt.Fprintf(p.output, "\x1b[?25l\r%s\r\n", strings.Repeat(" ", len(p.spinsteps[0])+len(p.Prompt)+3))
+			fmt.Fprintf(p.output, "%s\r%s\r\n", hideCursor, strings.Repeat(" ", len(p.spinsteps[0])+len(p.Prompt)+3))
 			return
 		default:
-			fmt.Fprintf(p.output, "\x1b[?25l\r%s  %s", spinLookup(i, p.spinsteps), p.Prompt)
+			fmt.Fprintf(p.output, "%s\r%s  %s", hideCursor, spinLookup(i, p.spinsteps), p.Prompt)
 			time.Sleep(time.Duration(250) * time.Millisecond)
 		}
 	}
@@ -239,15 +239,15 @@ func renderBar(p *Progress, c chan float64) {
 		spLen := p.DisplayLength - eqLen
 		switch {
 		case result == -1.0:
-			fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("=", p.DisplayLength), Styled(Green).ApplyTo("100%"))
-			fmt.Fprintf(p.output, "\r\n")
+			fmt.Fprintf(p.output, "%s\r%s: [%s] %s", hideCursor, p.Prompt, strings.Repeat("=", p.DisplayLength), Styled(Green).ApplyTo("100%"))
+			fmt.Fprintf(p.output, "%s\n", showCursor)
 			return
 		case result == -2.0:
-			fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s] %s", p.Prompt, strings.Repeat("X", p.DisplayLength), Styled(Red).ApplyTo("FAIL"))
-			fmt.Fprintf(p.output, "\r\n")
+			fmt.Fprintf(p.output, "%s\r%s: [%s] %s", hideCursor, p.Prompt, strings.Repeat("X", p.DisplayLength), Styled(Red).ApplyTo("FAIL"))
+			fmt.Fprintf(p.output, "%s\n", showCursor)
 			return
 		case result >= 0.0:
-			fmt.Fprintf(p.output, "\x1b[?25l\r%s: [%s%s] %2.0f%%", p.Prompt, strings.Repeat("=", eqLen), strings.Repeat(" ", spLen), 100.0*result)
+			fmt.Fprintf(p.output, "%s\r%s: [%s%s] %2.0f%%", hideCursor, p.Prompt, strings.Repeat("=", eqLen), strings.Repeat(" ", spLen), 100.0*result)
 		}
 
 	}
